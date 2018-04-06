@@ -30,6 +30,24 @@ void printPrime(long mask,long minterm,int len,char end='\n'){
   std::cout << end;
 }
 
+void genInput(std::vector<long>& in,int digit,std::vector<std::string>& out){
+  long printmask=1;
+  for(int i=0;i<in.size();i++){
+    std::string temp;
+    for(int j=digit-1;j>=0;j--){
+      if(in[i]&(printmask<<(j))){
+        temp+='1';
+      }else{
+        temp+='0';
+      }
+    }
+    // std::cout << in << '\n';
+    out.push_back(temp);
+  }
+}
+
+//END DEBUG
+
 /// do not use using namespace std
 
 /// do not alter the struct declaration
@@ -48,7 +66,8 @@ struct implicant{
   term minterm;
 };
 
-
+template <class T>
+bool notRepeated(std::vector<T>& v, T a);
 
 struct intermittent{
     int max1s;
@@ -77,10 +96,10 @@ struct intermittent{
     void compareAll(term basemask, std::vector<implicant>& primes,std::map<term,intermittent*>& itmList){
       std::map<term,intermittent*>::iterator listLb;
       ///////////
-      for(int i=0;i<minterms.size();i++){
-        std::cout << i<<" ones | ";
-        printV(minterms[i]);
-      }
+      // for(int i=0;i<minterms.size();i++){
+      //   std::cout << i<<" ones | ";
+      //   printV(minterms[i]);
+      // }
       /////////////////
       for(int ones=0;ones<minterms.size()-1;ones++){
         //compare between level
@@ -88,12 +107,12 @@ struct intermittent{
             for(int j=0;j<minterms[ones+1].size();j++){
               //i is in lower 1s group [0...l-2], j is higher 1s group [1...l-1]
               term mask=minterms[ones][i] ^ minterms[ones+1][j];
-              std::cout << "mask is "<<mask <<" | "<<!(mask & (mask-1))<< '\n';
+              // std::cout << "mask is "<<mask <<" | "<<!(mask & (mask-1))<< '\n';
               if(!(mask & (mask-1))){ //check if mask is power of 2, *0 will always be false
                 // i&j can be simplifted
                 used[ones][i]=true;
                 used[ones+1][j]=true;
-                std::cout << "find" << '\n';
+                // std::cout << "find" << '\n';
 
                 /// add mask & data
                 mask=basemask|mask;
@@ -102,7 +121,7 @@ struct intermittent{
                 if(listLb!=itmList.end() && !(itmList.key_comp()(mask,listLb->first))){ //from https://stackoverflow.com/questions/97050/stdmap-insert-or-stdmap-find
                   //mask exist, apped to struct
                   listLb->second->add(minterms[ones][i]);
-                  std::cout << "b1" << '\n';
+                  // std::cout << "b1" << '\n';
 
                 }else{
                   //mask not exist, make new
@@ -111,7 +130,7 @@ struct intermittent{
                   itmPtr->add(minterms[ones][i]);
                   itmList.insert(listLb,std::map<term,intermittent*>::value_type(mask,itmPtr));
                   ////////
-                  std::cout << "b2" << '\n';
+                  // std::cout << "b2" << '\n';
                   auto xxx1=itmList.rbegin()->second->minterms;
                   auto xxx2=itmList.rbegin()->first;
 
@@ -130,13 +149,14 @@ struct intermittent{
           }
       }
 
-      std::cout << "start xxxxxxxxxxxx all" << '\n';
+      // std::cout << "start xxxxxxxxxxxx all" << '\n';
 
 
       // move unsed case to prime implicant
+      std::vector<term> v;
       for(int ones=0;ones<used.size();ones++){
         for(int i=0;i<used[ones].size();i++){
-          if(!used[ones][i]){
+          if(!used[ones][i] && notRepeated(v,minterms[ones][i])){
             /////
             // std::cout << "term: " << '\n';
             // printPrime(basemask,minterms[ones][i]);
@@ -160,6 +180,7 @@ std::string evalcompactbdt(bdt t, const std::string& input);
 
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms);
 bool is1(char c);
+
 
 
 
@@ -194,8 +215,14 @@ int main(){
 
 
   // std::vector<std::string> fvalues={"000000","000001","000100","001000","000101","001010","001100","100100","001101","001110","110010","001111"};
-  std::vector<std::string> fvalues={"000000","000001","000010","000100","001000","000101","001010","001100","100100","001101","001110","110010","001111"};
+  // std::vector<std::string> fvalues={"000000","000001","000010","000100","001000","000101","001010","001100","100100","001101","001110","110010","001111"};
+  std::vector<std::string> fvalues;
+  std::vector<term> input={0,2,5,10,12,13,14,16,15,20,50};
+  genInput(input,6,fvalues);
+  printV(input);
   printV(fvalues);
+
+
   buildcompactbdt(fvalues);
 
 
@@ -228,6 +255,17 @@ bool is1(char c){
   }
 }
 
+template <class T>
+bool notRepeated(std::vector<T>& v, T a){
+  for(int i=0;i<v.size();i++){
+    if(v[i]==a){
+      return false;
+    }
+  }
+  v.push_back(a);
+  return true;
+}
+
 bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     /// write the implementation for the function here
 
@@ -241,7 +279,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     ItmList itmList;
 
     //first pass
-    std::cout << "process first pass" << '\n';
+    // std::cout << "process first pass" << '\n';
     intermittent* itmPtr=new intermittent();
     itmPtr->construct(0,fvalues[0].size());
     for(int i=0;i<minterms.size();i++){
@@ -252,10 +290,8 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     delete itmPtr;
 
     //all other path
-    int debugcount=0;
     while (!itmList.empty()) {//!itmList.empty()
-      std::cout << "process "<<debugcount<<" pass" << '\n';
-      debugcount++;
+      // std::cout << "process "<<debugcount<<" pass" << '\n';
       ItmList tempList;
       ///DEBUG
       if(!tempList.empty()){
@@ -272,7 +308,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     }
 
     //reduce term of prime implicants by using Petrick's method
-    std::cout << "simplifted min term are:" << '\n';
+    std::cout << "\n====================================\nsimplifted min term are:" << '\n';
     for(int x=0;x<primes.size();x++){
       printPrime(primes[x].mask,primes[x].minterm,fvalues[0].size());
     }
