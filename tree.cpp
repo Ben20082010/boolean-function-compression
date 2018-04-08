@@ -3,8 +3,11 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <stdlib.h>
 
 typedef unsigned long term;
+#define popcount(x) __builtin_popcountl(x)
+
 
 //DEBUG
 template <class T>
@@ -89,9 +92,9 @@ struct intermittent{
 
     };
     void add(term minterm) {
-      minterm=minterm&baseNot; // filter mask bit to 0
-      minterms[__builtin_popcount(minterm)].push_back(minterm);
-      used[__builtin_popcount(minterm)].push_back(false);
+      minterm=minterm&baseNot; // filter minterm[digit] to 0, when mask[digit]=1 (is "-")
+      minterms[popcount(minterm)].push_back(minterm);
+      used[popcount(minterm)].push_back(false);
     };
     void compareAll(term basemask, std::vector<implicant>& primes,std::map<term,intermittent*>& itmList){
       std::map<term,intermittent*>::iterator listLb;
@@ -131,8 +134,8 @@ struct intermittent{
                   itmList.insert(listLb,std::map<term,intermittent*>::value_type(mask,itmPtr));
                   ////////
                   // std::cout << "b2" << '\n';
-                  auto xxx1=itmList.rbegin()->second->minterms;
-                  auto xxx2=itmList.rbegin()->first;
+                  // auto xxx1=itmList.rbegin()->second->minterms;
+                  // auto xxx2=itmList.rbegin()->first;
 
                   // for(int ii=0;ii<xxx1.size();ii++){
                   //   for(int jj=0;jj<xxx1[ii].size();jj++){
@@ -174,7 +177,7 @@ struct bitCount{
   int space;//space for count of single bit, (least to avoid overflow)
   std::vector<long> count;//can be optimsed, current method waste higher bit when length is small, merge term for large operation
 
-  void construct(std::vector<implicant>& in,int length=64) {//require length, allow optmise (merge)in future operation
+  void construct(const std::vector<implicant>& in,int length=64) {//require length, allow optmise (merge)in future operation
     std::cout << "****require 64 bit long******" << '\n';
     space=32-__builtin_clz(in.size());//leading 1 from RHS
 
@@ -193,7 +196,7 @@ struct bitCount{
 
     //1st
     for(int j=0;j<space;j++){
-      count.push_back((tm&(mask<<(j)))>>j);
+      count.push_back( (tm>>j) & (mask) );
       // std::cout << count[j] << '\n';
     }
     // for(int i=0;i<count.size();i++){
@@ -204,7 +207,7 @@ struct bitCount{
     for(int i=1;i<in.size();i++){
       tm=in[i].mask;
       for(int j=0;j<space;j++){
-        count[j]=count[j]+((tm&(mask<<(j)))>>j);
+        count[j]=count[j]+ ((tm>>j) & (mask));
       }
       // for(int xx=0;xx<count.size();xx++){
       //   std::bitset<64>  x(count[xx]);
@@ -218,7 +221,7 @@ struct bitCount{
     unsigned long shift=digit/space*space;
     // std::cout << "shift is "<<shift << '\n';
     // std::cerr << (((long)1<<(space+1))-1) << '\n';
-    return ( count[digit%space] & ( ((1L<<(space+1))-1) <<(shift)) )>>shift;//(((long)1<<(space+1))-1) produce a mask of 1 [from LSB to space], x^(space+1)-1
+    return (count[digit%space]>>shift) &  ((1L<<(space+1))-1);//(((long)1<<(space+1))-1) produce a mask of 1 [from LSB to space], x^(space+1)-1
   }
 
 };
@@ -230,6 +233,8 @@ typedef std::map<term,intermittent*> ItmList;
 /// do not alter these two function declarations
 bdt buildcompactbdt(const std::vector<std::string>& fvalues);
 std::string evalcompactbdt(bdt t, const std::string& input);
+bdt newnode(std::string val=std::string(), bdt left=NULL, bdt right=NULL );
+// inline int popcount(long a);
 
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms);
 bool is1(char c);
@@ -319,12 +324,25 @@ bool notRepeated(std::vector<T>& v, T a){
   return true;
 }
 
+bdt newnode(std::string val, bdt left, bdt right){
+  bdt pt=new bdnode;
+  pt->val=val;
+  pt->left=left;
+  pt->right=right;
+  return pt;
+}
+
+// inline int popcount(long a){
+//   return __builtin_popcountl(a);
+// }
+
 bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     /// write the implementation for the function here
 
     //convert to minterm
     //string cant be termer than 64 bit, using template to solve this
-    std::vector<term> minterms(fvalues.size());
+    int varNum=fvalues.size();
+    std::vector<term> minterms(varNum);
     genMinterm(fvalues,minterms);
 
     //find prime implicants by useing Quine–McCluskey
@@ -360,15 +378,116 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
       itmList.swap(tempList);
     }
 
-    //reduce term of prime implicants by using Petrick's method
+
     std::cout << "\n====================================\nsimplifted min term are:" << '\n';
     for(int x=0;x<primes.size();x++){
       printPrime(primes[x].mask,primes[x].minterm,fvalues[0].size());
     }
+
+    //reduce term of prime implicants by using Petrick's method
+
+
+    //make tree
+    bdt rootpt = newnode();
+    recTreeConstructor(rootpt,primes,(1L<<varNum)-1);
+
+}
+
+void recTreeConstructor(btd& node,std::vector<implicant>& primes, term nodeLeft){//nodeLeft => 0 for not used node, 1 for used node
+  if(primes.size()==0){
+    //check if case for 0, empty primes
+    node->val="0";
+    return;
+  }else{
+    int maskSum;
+
+    //check if case for 1, one prime with --------
+    int maxMaskCount=popcount(nodeLeft);
+    std::vector<int> maskCount(primes.size(),0);
+    for(int i=0;i<primes.size();i++){
+      int cm=popcount(primes[i].mask);
+      if(cm==maxMaskCount){
+        node->val="1";
+        return; //terminate loop
+      }
+      maskCount[i]=cm;
+      maskSum=maskSum+cm;
+    }
+
+    //check if no mask, no "-"; use tree builder in ass1
+    //not nessuary for correctness, speed up in case with no "-"
+    // if(maskSum==0){
+    //
+    //   return;
+    // }
+
+    // hestristc, find node to chooice as mask next
+    // direction of scan MSB <-- <-- LSB
+    bitCount cnt; //no need to in struct move it to function
+    unsigned int mincount=(int)-1;//get 0xffff....
+    int optimalDigit;
+
+    cnt.construct(primes);
+    int counter=popcount(nodeLeft);
+    int digit=0;
+    while (counter>0) {
+      if((1L<<digit)&nodeLeft){
+        counter--;
+        //node that is not in the tree, chooice between these
+        if(cnt.get(digit)<mincount /*|| (cnt.get(digit)==mincount && maskCount[]) */){
+          //TODO: look horozotinaly
+          optimalDigit=digit;
+          mincount=cnt.get(digit);
+        }
+      }
+      digit++;
+    }
+
+    //RecCall, maske sub tree
+    std::vector<implicant> leftPrimes;//left node, 0
+    std::vector<implicant> rightPrimes;//right node, 1
+    term optimalMask=1<<optimalDigit;
+    for(int i=0;i<primes.size();i++){
+      if( (primes[i].minterm&optimalMask)==0){
+        //when minterm[digit]==0, mask[digit] may =1
+        if( (primes[i].mask&optimalMask)!=0 ){
+          //mask is one, need normalise mask and copy to both right & left listLb
+          implicant temp=primes[i];
+          temp.mask=temp.mask & (~optimalMask);
+          leftPrimes.push_back(temp);
+          rightPrimes.push_back(temp);
+        }else{
+          //mask is 0, normal case
+          leftPrimes.push_back(primes[i]);
+        }
+      }else{
+        //minterm[digit]==1 -> mask[digit] cant be 1, no need to check
+        rightPrimes.push_back(primes[i]);
+      }
+    }
+
+    // node->val="x"+
+    node->left=newnode();
+    recTreeConstructor(node->left,leftPrimes, nodeLeft& (~optimalMask));
+
+    node->right=newnode();
+    recTreeConstructor(node->right,rightPrimes, nodeLeft& (~optimalMask));
+  }
 }
 
 std::string evalcompactbdt(bdt t, const std::string& input){
-    /// write the implementation for the function here
+    while(t->val.size()>1){
+      if(is1(input[stoi(t->val.substr(1))-1])){
+        //right node
+        t=t->right;
+      }else{
+        //left node
+        t=t->left;
+      }
+    }
+
+    return t->val;
 }
+
 
 /// add here the implementation for any other functions you wish to define and use
