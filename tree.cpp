@@ -1,6 +1,5 @@
 //use c++11
 //in term:: MSB(xmsb).x4.x3.x2.x1.LSB(x0)
-#define bitsize 4
 
 
 
@@ -193,95 +192,28 @@ typedef std::map<term,intermittent*> ItmList;
 
 //DEBUG FUNC
   template <class T>
-  void printV(std::vector<T>& v, char end='\n', char m=' '){
-    for (int i=0;i<v.size();++i){
-      std::cout << v[i]<<m;
-    }
-    std::cout << end;
-  }
+  void printV(std::vector<T>& v, char end='\n', char m=' ');
 
   template <class T>
-  void printBit(std::vector<T>& v, char end='\n', char m=' '){
-    for (int i=0;i<v.size();++i){
-      std::bitset<bitsize> b(v[i]);
-      std::cout << b<<m;
-    }
-    std::cout << end;
-  }
+  void printBit(std::vector<T>& v, char end='\n', char m=' ');
 
-  void printPrime(term mask,term minterm,int len,char end='\n'){
-    term printmask=1;
-    for(int i=0;i<len;i++){
-      if(mask&(printmask<<(i))){
-        std::cout<<'-';
-      }else{
-        if(minterm&(printmask<<(i))){
-          std::cout<<'1';
-        }else{
-          std::cout<<'0';
-        }
-      }
-    }
-    std::cout << end;
-  }
+  void printPrime(term mask,term minterm,int len,char end='\n');
+  void genInput(std::vector<term>& in,int digit,std::vector<std::string>& out);
+  void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out);
+  bool testCorrectness(bdt rt, std::vector<term> correct);
 
-  void genInput(std::vector<term>& in,int digit,std::vector<std::string>& out){
-    term printmask=1;
-    for(int i=0;i<in.size();i++){
-      std::string temp;
-      for(int j=digit-1;j>=0;j--){
-        if(in[i]&(printmask<<(j))){
-          temp+='1';
-        }else{
-          temp+='0';
-        }
-      }
-      // std::cout << in << '\n';
-      out.push_back(temp);
-    }
-  }
 
-  void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out){
-    if(t!=NULL){
-      // out[depth].append("\t"+(t->val));
-      out[depth]=out[depth]+"  "+t->val;
-      printTreeRec(t->left,depth+1,out);
-      printTreeRec(t->right,depth+1,out);
-    }
-  }
-
-  void printTree(bdt t, int depth){
-    std::vector<std::string> out;
-
-    for(int i=0;i<depth;i++){
-      out.push_back("");
-    }
-
-    printTreeRec(t,0,out);
-
-    for (int i=0;i<depth;i++){
-      std::cout << i<<"\t| "<<out[i]  << '\n';
-    }
-  std::cout << "x" << '\n';
-
-  }
+  void printTree(bdt t, int depth);
 
 //END DEBUG FUNC
-
-/// do not use using namespace std
-
-/// do not alter the struct declaration
-
-
-
 
 /// do not alter these two function declarations
 bdt buildcompactbdt(const std::vector<std::string>& fvalues);
 std::string evalcompactbdt(bdt t, const std::string& input);
+
 bdt newnode(std::string val=std::string(), bdt left=NULL, bdt right=NULL );
 void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeLeft);
 // inline int popcount(long a);
-
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms);
 bool is1(char c);
 
@@ -311,18 +243,18 @@ bool is1(char c);
 /// add here the declarations (not the implementation)
 /// for any other functions you wish to define and use
 
-/// before the submission you need to remove the main
-/// (either delete it or comment it out)
-/// otherwise it will intefere with the automated testing
 
 
 int main(){
+  #define bitsize 8
+  std::vector<term> input={0,1,2,5,6,7,8,9,10,14};
+
+
 
 
   // std::vector<std::string> fvalues={"000000","000001","000100","001000","000101","001010","001100","100100","001101","001110","110010","001111"};
   // std::vector<std::string> fvalues={"000000","000001","000010","000100","001000","000101","001010","001100","100100","001101","001110","110010","001111"};
   std::vector<std::string> fvalues;
-  std::vector<term> input={0,1,2,5,6,7,8,9,10,14};
   genInput(input,bitsize,fvalues);
   printV(input);
   printV(fvalues);
@@ -335,11 +267,9 @@ int main(){
   }
 
   std::cout << evalcompactbdt(fbdt,"1111") << '\n';
-  printTree(fbdt,6);
+  printTree(fbdt,fvalues[0].size()+1);
 
-  std::cout << fbdt->right << '\n';
-  std::cout << fbdt->left << '\n';
-  std::cout << fbdt->val << '\n';
+  testCorrectness(fbdt,input);
 
 
 
@@ -548,4 +478,103 @@ std::string evalcompactbdt(bdt t, const std::string& input){
 }
 
 
+
+
 /// add here the implementation for any other functions you wish to define and use
+//DEBUG FUNC
+  template <class T>
+  void printV(std::vector<T>& v, char end, char m){
+    for (int i=0;i<v.size();++i){
+      std::cout << v[i]<<m;
+    }
+    std::cout << end;
+  }
+
+  template <class T>
+  void printBit(std::vector<T>& v, char end, char m){
+    for (int i=0;i<v.size();++i){
+      std::bitset<bitsize> b(v[i]);
+      std::cout << b<<m;
+    }
+    std::cout << end;
+  }
+
+  void printPrime(term mask,term minterm,int len,char end){
+    term printmask=1;
+    for(int i=0;i<len;i++){
+      if(mask&(printmask<<(i))){
+        std::cout<<'-';
+      }else{
+        if(minterm&(printmask<<(i))){
+          std::cout<<'1';
+        }else{
+          std::cout<<'0';
+        }
+      }
+    }
+    std::cout << end;
+  }
+
+  void genInput(std::vector<term>& in,int digit,std::vector<std::string>& out){
+    term printmask=1;
+    for(int i=0;i<in.size();i++){
+      std::string temp;
+      for(int j=digit-1;j>=0;j--){
+        if(in[i]&(printmask<<(j))){
+          temp+='1';
+        }else{
+          temp+='0';
+        }
+      }
+      // std::cout << in << '\n';
+      out.push_back(temp);
+    }
+  }
+
+  void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out){
+    if(t!=NULL){
+      // out[depth].append("\t"+(t->val));
+      out[depth]=out[depth]+"  "+t->val;
+      printTreeRec(t->left,depth+1,out);
+      printTreeRec(t->right,depth+1,out);
+    }
+  }
+
+  void printTree(bdt t, int depth){
+    std::vector<std::string> out;
+
+    for(int i=0;i<depth;i++){
+      out.push_back("");
+    }
+
+    printTreeRec(t,0,out);
+
+    for (int i=0;i<depth;i++){
+      std::cout << i<<"\t| "<<out[i]  << '\n';
+    }
+  std::cout << "x" << '\n';
+
+  }
+
+  bool testCorrectness(bdt rt, std::vector<term> correct){
+    term max=(1<<bitsize);
+    long printmask=1;
+
+    for(term i=0;i<max;i++){
+      std::string temp;
+      for(int j=bitsize-1;j>=0;j--){
+        if(i&(printmask<<(j))){
+          temp+='1';
+        }else{
+          temp+='0';
+        }
+      }
+
+      if(is1(evalcompactbdt(rt,temp)[0])){
+        std::cout << i << " | "<< temp<<" is 1" << '\n';
+      }
+
+    }
+  }
+
+//END DEBUG FUNC
