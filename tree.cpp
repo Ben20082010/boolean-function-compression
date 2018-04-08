@@ -234,6 +234,7 @@ typedef std::map<term,intermittent*> ItmList;
 bdt buildcompactbdt(const std::vector<std::string>& fvalues);
 std::string evalcompactbdt(bdt t, const std::string& input);
 bdt newnode(std::string val=std::string(), bdt left=NULL, bdt right=NULL );
+void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeLeft);
 // inline int popcount(long a);
 
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms);
@@ -384,7 +385,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
       printPrime(primes[x].mask,primes[x].minterm,fvalues[0].size());
     }
 
-    //reduce term of prime implicants by using Petrick's method
+    //reduce no. of term of prime implicants by using Petrick's method
 
 
     //make tree
@@ -393,7 +394,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 
 }
 
-void recTreeConstructor(btd& node,std::vector<implicant>& primes, term nodeLeft){//nodeLeft => 0 for not used node, 1 for used node
+void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeLeft){//nodeLeft => 0 for not used node, 1 for used node
   if(primes.size()==0){
     //check if case for 0, empty primes
     node->val="0";
