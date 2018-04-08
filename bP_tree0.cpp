@@ -334,8 +334,7 @@ int main(){
     std::cout << evalcompactbdt(fbdt,fvalues[i])<<" | "<< std::bitset<bitsize>(fvalues[i]) << '\n';
   }
 
-  std::cout << evalcompactbdt(fbdt,"1111") << '\n';
-  printTree(fbdt,6);
+  std::cout << evalcompactbdt(fbdt,"000000") << '\n';
 
   std::cout << fbdt->right << '\n';
   std::cout << fbdt->left << '\n';
@@ -398,7 +397,8 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 
     //convert to minterm
     //string cant be termer than 64 bit, using template to solve this
-    std::vector<term> minterms(fvalues.size());
+    int varNum=fvalues.size();
+    std::vector<term> minterms(varNum);
     genMinterm(fvalues,minterms);
 
     //find prime implicants by useing Quine–McCluskey
@@ -445,7 +445,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 
     //make tree
     bdt rootpt = newnode();
-    recTreeConstructor(rootpt,primes,(1L<<fvalues[0].size())-1);
+    recTreeConstructor(rootpt,primes,(1L<<varNum)-1);
 
     return rootpt;
 }

@@ -1,5 +1,6 @@
 //C++11
 
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -18,6 +19,30 @@ struct bdnode{
 
 /// do not alter the typedef
 typedef bdnode* bdt;
+
+template <class T>
+void printV(std::vector<T>& v, char end='\n', char m=' '){
+  for (int i=0;i<v.size();++i){
+    std::cout << v[i]<<m;
+  }
+  std::cout << end;
+}
+
+void genInput(std::vector<long>& in,int digit,std::vector<std::string>& out){
+  long printmask=1;
+  for(int i=0;i<in.size();i++){
+    std::string temp;
+    for(int j=digit-1;j>=0;j--){
+      if(in[i]&(printmask<<(j))){
+        temp+='1';
+      }else{
+        temp+='0';
+      }
+    }
+    // std::cout << in << '\n';
+    out.push_back(temp);
+  }
+}
 
 /// do not alter these two function declarations
 bdt buildbdt(const std::vector<std::string>& fvalues);
@@ -70,20 +95,16 @@ std::cout << "x" << '\n';
 int main(){
 
     /// write the code for the main here in order to test your functions
-    std::vector<std::string> input;
-    std::string in = "1001";
-    input.push_back(in);
-    in = "1101";
-    input.push_back(in);
-    in = "1111";
-    input.push_back(in);
-    int l=input[0].length();
-    std::cout << "building..." << '\n';
-    bdt fbdt = buildbdt(input);
+    std::vector<std::string> fvalues;
+    std::vector<long> input={0,1,2,5,6,7,8,9,10,14};
+    genInput(input,4,fvalues);
+    printV(input);
+    printV(fvalues);
+    bdt fbdt = buildbdt(fvalues);
 
 
     // printTree(fbdt,input[0].length()-1);
-    printTree(fbdt,l+1);
+    printTree(fbdt,fvalues[0].size()+1);
 
     std::cout << evalbdt(fbdt,"1001")<<" | "<<evalcompactbdt(fbdt,"1001") << '\n';
     std::cout << evalbdt(fbdt,"0000")<<" | "<<evalcompactbdt(fbdt,"0000") << '\n';
