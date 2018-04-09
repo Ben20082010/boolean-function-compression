@@ -12,6 +12,8 @@
 #define bitsize 6
 
 typedef unsigned long term;
+#define popcount(x) __builtin_popcountl(x)
+
 
 struct bitCount{
   int space;//space for count of single bit, (least to avoid overflow)
@@ -64,6 +66,11 @@ struct bitCount{
     return (count[digit%space]>>shift) &  ((1L<<(space+1))-1);//(((long)1<<(space+1))-1) produce a mask of 1 [from LSB to space], x^(space+1)-1
   }
 
+};
+
+struct implicant{
+  term mask;
+  term minterm;
 };
 
 bool is1(char c){
@@ -139,13 +146,45 @@ void printBit(std::vector<T>& v, char end='\n', char m=' '){
 
 int main ()
 {
-  std::vector<std::string> fvalues;
-  std::vector<term> input={0,2,5,10,12,13,14,16,15,20,50};
-  genInput(input,6,fvalues);
-  printV(input);
-  printV(fvalues);
+  // std::vector<std::string> fvalues;
+  // std::vector<term> input={0,2,5,10,12,13,14,16,15,20,50};
+  // genInput(input,6,fvalues);
+  // printV(input);
+  // printV(fvalues);
 
-  std::vector<term> minterms(fvalues.size());
-  genMinterm(fvalues,minterms);
-  printBit(minterms);
+  implicant im={0b0110,0b0001};
+  printPrime(im.mask,im.minterm,4);
+
+  // for(int i=0;i<primes.size();i++){
+    int counter=popcount(im.mask);
+    term max=(1<<counter)-1;
+    int digit=0;
+    std::vector<int> shifts;
+    shifts.reserve(counter);
+
+    //locate 1 in mask
+    while (counter>0) {
+      if((1L<<digit)&im.mask){
+        --counter;
+        shifts.push_back(digit);
+      }
+      ++digit;
+    }
+    //produce all minterm it repersent
+    printV(shifts);
+    for(term j=0;j<=max;j++){
+      //iterate all combination
+      term mask=0;
+      for(int s=0;s<shifts.size();s++){
+        if(j&(1L<<s)){
+          mask=mask|(1L<<shifts[s]);
+        }
+      }
+      printPrime(0,im.minterm|mask,4);
+    }
+  // }
+
+  // std::vector<term> minterms(fvalues.size());
+  // genMinterm(fvalues,minterms);
+  // printBit(minterms);
 }

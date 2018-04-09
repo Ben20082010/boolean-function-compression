@@ -188,6 +188,7 @@ struct bitCount{
 
 typedef bdnode* bdt;
 typedef std::map<term,intermittent*> ItmList;
+typedef std::map<term, std::vector<implicant>> PIchart;
 
 
 //DEBUG FUNC
@@ -197,10 +198,17 @@ typedef std::map<term,intermittent*> ItmList;
   template <class T>
   void printBit(std::vector<T>& v, char end='\n', char m=' ');
 
+  template <class T>
+  int find(std::vector<T>& v, T a);
+
   void printPrime(term mask,term minterm,int len,char end='\n');
   void genInput(std::vector<term>& in,int digit,std::vector<std::string>& out);
   void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out);
   bool testCorrectness(bdt rt, std::vector<term> correct);
+  int getTreeNodeNum(bdnode*  t);
+  void getTreeNodeNumRec(bdnode*  t,int& count);
+
+  std::string getMinterm(term i);
 
 
   void printTree(bdt t, int depth);
@@ -247,7 +255,10 @@ bool is1(char c);
 
 int main(){
   #define bitsize 8
-  std::vector<term> input={0,1,2,5,6,7,8,9,10,14};
+  std::vector<term> input;
+  // input={0,1,2,5,6,7,8,9,10,14};
+  // input={197,0,56,48,35,107,116,144,8,174,179,128,141,171,141};
+  input={0,1,5,8,10,13,10};
 
 
 
@@ -262,14 +273,16 @@ int main(){
 
   bdt fbdt=buildcompactbdt(fvalues);
 
-  for(int i=0;i<fvalues.size();i++){
-    std::cout << evalcompactbdt(fbdt,fvalues[i])<<" | "<< std::bitset<bitsize>(fvalues[i]) << '\n';
-  }
-
-  std::cout << evalcompactbdt(fbdt,"1111") << '\n';
+  // for(int i=0;i<fvalues.size();i++){
+  //   std::cout << evalcompactbdt(fbdt,fvalues[i])<<" | "<< std::bitset<bitsize>(fvalues[i]) << '\n';
+  // }
+  //
+  // std::cout << evalcompactbdt(fbdt,"1111") << '\n';
   printTree(fbdt,fvalues[0].size()+1);
-
+std::cerr << "\n\n" << '\n';
   testCorrectness(fbdt,input);
+
+  std::cout << "\n\n the tree has "<<getTreeNodeNum(fbdt) << " nodes\n";
 
 
 
@@ -371,6 +384,45 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     }
 
     //reduce no. of term of prime implicants by using Petrick's method
+    // PIchart chart;
+    // for(int i=0;i<minterms.size();i++){
+    //   chart[minterms[i]]={};
+    // }
+    //
+    // for(int i=0;i<primes.size();i++){
+    //   int counter=popcount(primes[i].mask);
+    //   term max=(1<<counter)-1;
+    //   int digit=0;
+    //   std::vector<int> shifts;
+    //   shifts.reserve(counter);
+    //
+    //   //locate 1 in mask
+    //   while (counter>0) {
+    //     if((1L<<digit)&primes[i].mask){
+    //       --counter;
+    //       shifts.push_back(digit);
+    //     }
+    //     ++digit;
+    //   }
+    //   //produce all minterm it repersent
+    //   for(term j=0;j<=max;j++){
+    //     //iterate all combination
+    //     term mask=0;
+    //     for(int s=0;s<shifts.size();s++){
+    //       if(j&(1L<<s)){
+    //         mask=mask|(1L<<shifts[s]);
+    //       }
+    //     }
+    //
+    //     //minterm is primes[i].minterm|mask, for all the current primes[i], for all i
+    //     printPrime(0,minterm,bitsize);
+    //     term minterm=primes[i].minterm|mask;
+    //     chart[minterm].push_back(primes[i]);
+    //     chart[minterm].push_back(primes[i]);
+    //
+    //   }
+    // }
+
 
 
     //make tree
@@ -482,6 +534,32 @@ std::string evalcompactbdt(bdt t, const std::string& input){
 
 /// add here the implementation for any other functions you wish to define and use
 //DEBUG FUNC
+
+
+  template <class T>
+  int find(std::vector<T>& v, T a){
+    for(int i=0;i<v.size();i++){
+      if(v[i]==a){
+        return i;
+      }
+    }
+    // v.push_back(a);
+    return -1;
+  }
+
+  std::string getMinterm(term i){
+    long printmask=1;
+    std::string temp;
+    for(int j=bitsize-1;j>=0;j--){
+      if(i&(printmask<<(j))){
+        temp+='1';
+      }else{
+        temp+='0';
+      }
+    }
+    return temp;
+  }
+
   template <class T>
   void printV(std::vector<T>& v, char end, char m){
     for (int i=0;i<v.size();++i){
@@ -531,6 +609,20 @@ std::string evalcompactbdt(bdt t, const std::string& input){
     }
   }
 
+  int getTreeNodeNum(bdnode*  t) {
+    int count=0;
+    getTreeNodeNumRec(t,count);
+    return count;
+  }
+
+  void getTreeNodeNumRec(bdnode*  t,int& count){
+    if(t!=NULL){
+      count++;
+      getTreeNodeNumRec(t->left,count);
+      getTreeNodeNumRec(t->right,count);
+    }
+  }
+
   void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out){
     if(t!=NULL){
       // out[depth].append("\t"+(t->val));
@@ -552,29 +644,50 @@ std::string evalcompactbdt(bdt t, const std::string& input){
     for (int i=0;i<depth;i++){
       std::cout << i<<"\t| "<<out[i]  << '\n';
     }
-  std::cout << "x" << '\n';
 
   }
 
   bool testCorrectness(bdt rt, std::vector<term> correct){
-    term max=(1<<bitsize);
-    long printmask=1;
+    std::cerr << "test start" << '\n';
+    term max=(1<<bitsize)-1;
+    std::vector<term> outTerm;
+    std::vector<bool> outBool;
+    outTerm.reserve(correct.size());
+    outBool.reserve(correct.size());
 
-    for(term i=0;i<max;i++){
-      std::string temp;
-      for(int j=bitsize-1;j>=0;j--){
-        if(i&(printmask<<(j))){
-          temp+='1';
-        }else{
-          temp+='0';
-        }
-      }
+
+    for(term i=0;i<=max;i++){
+      std::string temp=getMinterm(i);
 
       if(is1(evalcompactbdt(rt,temp)[0])){
-        std::cout << i << " | "<< temp<<" is 1" << '\n';
+        std::cout << temp<<"("<<i<<") " << ' '<<std::flush;
+        outTerm.push_back(i);
+        outBool.push_back(false);
       }
-
     }
+
+    std::cout << "\n\n*************************************\n* all test done, generateing errors *\n*************************************\n";
+
+    std::cout << "below should return 0, but should be 1:" << '\n';
+    for(int i=0;i<correct.size();i++){
+      int f=find(outTerm,correct[i]);
+      if(f>=0){
+        outBool[f]=true;
+        // std::cout << outTerm[f] << '\n';
+      }else{
+        std::cout <<"term "<< getMinterm(outTerm[i])<< "("<<outTerm[i]<<")" << '\n';
+      }
+    }
+
+    std::cout << "\nbelow should return 1, but should be 0:" << '\n';
+
+    for(int i=0;i<outBool.size();i++){
+      if(outBool[i]!=true){
+        std::cout <<"term "<< getMinterm(outTerm[i])<< "("<<outTerm[i]<<")" << '\n';
+      }
+    }
+
+    std::cout << "\nend of errors" << '\n';
   }
 
 //END DEBUG FUNC
