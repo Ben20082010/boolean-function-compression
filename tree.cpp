@@ -203,15 +203,12 @@ typedef std::map<term, std::vector<implicant>> PIchart;
 
   void printPrime(term mask,term minterm,int len,char end='\n');
   void genInput(std::vector<term>& in,int digit,std::vector<std::string>& out);
+  void printTree(bdt t, int depth);
   void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out);
   bool testCorrectness(bdt rt, std::vector<term> correct);
   int getTreeNodeNum(bdnode*  t);
   void getTreeNodeNumRec(bdnode*  t,int& count);
-
   std::string getMinterm(term i);
-
-
-  void printTree(bdt t, int depth);
 
 //END DEBUG FUNC
 
