@@ -209,6 +209,7 @@ typedef std::map<term, std::vector<implicant>> PIchart;
   int getTreeNodeNum(bdnode*  t);
   void getTreeNodeNumRec(bdnode*  t,int& count);
   std::string getMinterm(term i);
+  long getAss1NodeNum();
 
 //END DEBUG FUNC
 
@@ -254,8 +255,8 @@ int main(){
   #define bitsize 8
   std::vector<term> input;
   // input={0,1,2,5,6,7,8,9,10,14};
-  // input={197,0,56,48,35,107,116,144,8,174,179,128,141,171,141};
-  input={0,1,5,8,10,13,10};
+  // input={4, 7, 8, 15, 20, 21, 26, 29, 30, 32, 35, 38, 43, 45, 46, 49, 52, 54, 55, 56, 57, 58, 59, 60, 62, 63, 64, 68, 69, 71, 72, 74, 77, 80, 82, 84, 88, 89, 90, 91, 92, 94, 95, 96, 100, 104, 105, 106, 109, 110, 111, 114, 115, 117, 121, 123, 126, 127, 129, 131, 132, 133, 137, 138, 139, 142, 143, 145, 146, 147, 150, 152, 153, 158, 160, 162, 163, 165, 166, 167, 168, 170, 171, 172, 173, 176, 177, 178, 179, 181, 183, 185, 186, 188, 190, 191, 195, 196, 197, 200};
+  input={40, 51, 37, 38, 27, 50, 14, 5, 42, 53, 61, 20, 21, 16, 15, 22, 63, 30, 25, 47, 6, 19, 17, 23, 13, 56, 26, 9, 52, 45, 24, 12, 1, 7, 62, 41, 28, 32, 58, 8, 0, 29, 39, 35, 43, 60, 57, 59, 11, 31, 3, 44, 54, 46, 36, 4, 48, 2, 34, 18};
 
 
 
@@ -279,9 +280,8 @@ int main(){
 std::cerr << "\n\n" << '\n';
   testCorrectness(fbdt,input);
 
-  std::cout << "\n\n the tree has "<<getTreeNodeNum(fbdt) << " nodes\n";
-
-
+  long nodeNum=getTreeNodeNum(fbdt);
+  std::cout << "\n\n the tree has "<<nodeNum << " nodes\ncompare to tree in ass1 require "<<getAss1NodeNum()<<" node\nreduced by "<<((getAss1NodeNum()-nodeNum)*100/getAss1NodeNum())<<"%\n";
 
   return 0;
 }
@@ -334,10 +334,12 @@ bdt newnode(std::string val, bdt left, bdt right){
 // }
 
 bdt buildcompactbdt(const std::vector<std::string>& fvalues){
+    std::cout << "start building trees" << '\n';
     /// write the implementation for the function here
 
     //convert to minterm
     //string cant be termer than 64 bit, using template to solve this
+    std::cerr << "gen minterms" << '\n';
     std::vector<term> minterms(fvalues.size());
     genMinterm(fvalues,minterms);
 
@@ -347,11 +349,13 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 
     //first pass
     // std::cout << "process first pass" << '\n';
+    std::cerr << "pepare to gen prime implicant" << '\n';
     intermittent* itmPtr=new intermittent();
     itmPtr->construct(0,fvalues[0].size());
     for(int i=0;i<minterms.size();i++){
       itmPtr->add(minterms[i]);
     }
+    std::cerr << "gen prime implicant" << '\n';
     itmPtr->compareAll(0,primes,itmList);
 
     delete itmPtr;
@@ -604,6 +608,10 @@ std::string evalcompactbdt(bdt t, const std::string& input){
       // std::cout << in << '\n';
       out.push_back(temp);
     }
+  }
+
+  long getAss1NodeNum(){
+    return (1L<<bitsize)-1;
   }
 
   int getTreeNodeNum(bdnode*  t) {
