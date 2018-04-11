@@ -96,8 +96,10 @@ int main(){
 
     /// write the code for the main here in order to test your functions
     std::vector<std::string> fvalues;
-    std::vector<long> input={0,1,2,5,6,7,8,9,10,14};
-    genInput(input,4,fvalues);
+    std::vector<long> input;
+    input={0, 2, 4, 8, 9, 10, 11, 12, 16, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 39, 40, 44, 46, 49, 51, 52, 61, 63};
+
+    genInput(input,6,fvalues);
     printV(input);
     printV(fvalues);
     bdt fbdt = buildbdt(fvalues);
