@@ -7,9 +7,10 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <stdlib.h>
 
 #define popcount(x) __builtin_popcountl(x)
-#define bitsize 6
+#define bitsize 64
 
 typedef unsigned long term;
 #define popcount(x) __builtin_popcountl(x)
@@ -143,6 +144,29 @@ void printBit(std::vector<T>& v, char end='\n', char m=' '){
   }
   std::cout << end;
 }
+const uint64_t m1  = 0x5555555555555555; //binary: 0101...
+const uint64_t m2  = 0x3333333333333333; //binary: 00110011..
+const uint64_t m4  = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
+const uint64_t h01 = 0x0101010101010101; //the sum of 256 to the power of 0,1,2,3...
+
+inline int popcount(uint64_t x){
+    x -= (x >> 1) & m1;             //put count of each 2 bits into those 2 bits
+    x = (x & m2) + ((x >> 2) & m2); //put count of each 4 bits into those 4 bits
+    x = (x + (x >> 4)) & m4;        //put count of each 8 bits into those 8 bits
+    return (x * h01) >> 56;  //returns left 8 bits of x + (x<<8) + (x<<16) + (x<<24) + ...
+
+}
+int leading1(uint64_t x){
+  x=x|(x>>1);
+  x=x|(x>>2);
+  x=x|(x>>4);
+  x=x|(x>>8);
+  x=x|(x>>16);
+  x=x|(x>>32);
+
+  return popcount(x);
+
+}
 
 int main ()
 {
@@ -151,39 +175,11 @@ int main ()
   // genInput(input,6,fvalues);
   // printV(input);
   // printV(fvalues);
-
-  implicant im={0b0110,0b0001};
-  printPrime(im.mask,im.minterm,4);
-
-  // for(int i=0;i<primes.size();i++){
-    int counter=popcount(im.mask);
-    term max=(1<<counter)-1;
-    int digit=0;
-    std::vector<int> shifts;
-    shifts.reserve(counter);
-
-    //locate 1 in mask
-    while (counter>0) {
-      if((1L<<digit)&im.mask){
-        --counter;
-        shifts.push_back(digit);
-      }
-      ++digit;
-    }
-    //produce all minterm it repersent
-    printV(shifts);
-    for(term j=0;j<=max;j++){
-      //iterate all combination
-      term mask=0;
-      for(int s=0;s<shifts.size();s++){
-        if(j&(1L<<s)){
-          mask=mask|(1L<<shifts[s]);
-        }
-      }
-      printPrime(0,im.minterm|mask,4);
-    }
+// std::cout << leading1(x) << '\n';
+// std::cerr << 32-__builtin_clz(x) << '\n';
   // }
-
+  uint64_t x =(1ULL<<64)-1;
+  std::cout << x << '\n';
   // std::vector<term> minterms(fvalues.size());
   // genMinterm(fvalues,minterms);
   // printBit(minterms);
