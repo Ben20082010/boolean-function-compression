@@ -14,9 +14,13 @@
 
 
 
-typedef unsigned long  term;
-#define popcount(x) __builtin_popcountll(x)
+typedef uint64_t term;
+// #define popcount(x) __builtin_popcountl(x)
 
+const uint64_t m1  = 0x5555555555555555; //binary: 0101...
+const uint64_t m2  = 0x3333333333333333; //binary: 00110011..
+const uint64_t m4  = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
+const uint64_t h01 = 0x0101010101010101; //the sum of 256 to the power of 0,1,2,3...
 
 struct bdnode{
     std::string val;
@@ -33,6 +37,7 @@ struct implicant{
 template <class T>
 bool notRepeated(std::vector<T>& v, T a);
 void printPrime(term mask,term minterm,int len=27,char end='\n');
+int popcount(uint64_t x);
 
 struct intermittent{
     int max1s;
@@ -306,6 +311,7 @@ int main(){
 
   printTree(fbdt,fvalues[0].size()+1);
 std::cerr <<'\n';
+
 // std::cout << evalcompactbdt(fbdt,"0100") << '\n';
 
   long nodeNum=getTreeNodeNum(fbdt);
@@ -362,6 +368,15 @@ bdt newnode(std::string val, bdt left, bdt right){
   pt->right=right;
   return pt;
 }
+
+int popcount(unsigned long long x){
+    x -= (x >> 1) & m1;             //put count of each 2 bits into those 2 bits
+    x = (x & m2) + ((x >> 2) & m2); //put count of each 4 bits into those 4 bits
+    x = (x + (x >> 4)) & m4;        //put count of each 8 bits into those 8 bits
+    return (x * h01) >> 56;  //returns left 8 bits of x + (x<<8) + (x<<16) + (x<<24) + ...
+
+}
+
 
 // inline int popcount(long a){
 //   return __builtin_popcountl(a);
