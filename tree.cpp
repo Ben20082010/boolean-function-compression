@@ -270,7 +270,7 @@ bool is1(char c);
 
 
 int main(){
-  #define bitsize 64
+  #define bitsize 30
   #define startwithPI false
   #define outputToFile false
 
@@ -324,7 +324,7 @@ std::cerr <<'\n';
 
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms){ //checked order right
   for(int i=0;i<fvalues.size();i++){
-    int minterm=0;
+    term minterm=0;
     for(int p=fvalues[0].size()-1;p>=0;--p){
       if(is1(fvalues[i][p])){
         minterm=minterm*2+1;
@@ -427,7 +427,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 
             delete itmPtr;
 
-            //all other path
+            //all other pass
             while (!itmList.empty()) {//!itmList.empty()
               // std::cout << "process "<<debugcount<<" pass" << '\n';
               ItmList tempList;
@@ -496,6 +496,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 }
 
 void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRemains){//nodeRemains => 0 for not used node, 1 for used node
+std::cout << std::bitset<64>(nodeRemains) << '\n';
   if(primes.size()==0){
     //check if case for 0, empty primes
     node->val="0";

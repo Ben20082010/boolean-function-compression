@@ -1,0 +1,53 @@
+//use same func name, easy for subsititude
+// may need union? https://stackoverflow.com/questions/8627625/is-it-possible-to-make-function-that-will-accept-multiple-data-types-for-given-a
+
+
+baseNot=~mask;
+minterm=minterm & baseNot;
+mask=basemask | mask;
+mask=minterms[ones][i] ^ minterms[ones+1][j];
+(mask & (mask-1)) //check power of 2 //can be simplifted, make function powerof2(term)
+  !(mask & (mask-1))
+https://stackoverflow.com/questions/600293/how-to-check-if-a-number-is-a-power-of-2
+
+
+int pcount=popcount(minterm); //need additional popcount for vector form
+  //notRepeated(minterms[pcount],minterm); //need additional notRepeated for vector form
+  // not required vector have "=="
+////////////////////////////////////////// DONE/////////////////
+
+
+printPrime(basemask,minterms[ones][i]);  //base&minterm
+
+genMinterm(fvalues,minterms); need be vector
+
+cout<<std::bitset<8>(mask) //function for this
+
+
+bitCount //remake
+
+
+input{} not work for ....
+
+
+//checked up to buildcompactbdt
+
+term tempNodeRemains=(signed long long)-1;
+if(fvalues[0].size()<64){
+      tempNodeRemains=(1ULL<<fvalues[0].size())-1;
+    }
+size>64
+addtional while loop
+
+
+//loop for
+for(int i=0;i<primes.size();i++){
+      // std::cout << "/* message */" << '\n';
+      int cm=popcount(primes[i].mask);
+      if(cm==maxMaskCount){
+        node->val="1";
+        return; //terminate loop
+      }
+      maskCount[i]=cm;
+      maskSum=maskSum+cm;
+    }

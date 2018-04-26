@@ -1,22 +1,35 @@
 //use c++11
 //in term:: MSB(xmsb).x4.x3.x2.x1.LSB(x0)
 
+#define bitsize 64
+#define startwithPI false
+#define outputToFile false
 
-
-#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include <stdlib.h>
-#include <bitset>
+
+//for debug
 #include <chrono>
+#include <math.h>
+#include <iostream>
+#include <bitset>
 
 
 
 
-typedef std::vector<uint64_t> term;
+#define wdlength 64
+#define wdMax 0xFFFFFFFFFFFFFFFF
+typedef uint64_t wd;
+typedef std::vector<wd> term;
+
 // #define popcount(x) __builtin_popcountl(x)
 
+term operator~(const term& v1);
+term operator&(const term& v1,const term& v2);
+term operator|(const term& v1,const term& v2);
+term operator^(const term& v1,const term& v2);
 
 
 struct bdnode{
@@ -33,9 +46,15 @@ struct implicant{
 
 template <class T>
 bool notRepeated(std::vector<T>& v, T a);
-void printPrime(term mask,term minterm,int len=27,char end='\n');
+void printPrime(const term& mask,const term& minterm, int len=bitsize, char end='\n');
 inline int popcount(uint64_t x);
+inline int popcount(const term& v);
 inline int leading1(uint64_t x);
+bool isPower2(const term& v);
+
+
+//debug func
+void printMinterm(const term& minterm);
 
 
 struct intermittent{
@@ -45,18 +64,18 @@ struct intermittent{
     std::vector<std::vector<term>> minterms;
     std::vector<std::vector<bool>> used;
 
-    void construct(term mask,int len){
+    void construct(const term& mask,int len){
       // basemask=mask;
       max1s=len;
       baseNot=~mask;
-      // std::vector<std::vector<term>> minterms=std::vector<std::vector<term>> minterms(len+1);
-      // std::vector<std::vector<bool>> used=std::vector<std::vector<bool>> used(len+1);
+
       for(int i=0;i<=max1s;i++){
         minterms.push_back(std::vector<term>());
         used.push_back(std::vector<bool>());
       }
 
     };
+
     void add(term minterm) {
       minterm=minterm&baseNot; // filter minterm[digit] to 0, when mask[digit]=1 (is "-")
       int pcount=popcount(minterm);
@@ -85,7 +104,7 @@ struct intermittent{
               //i is in lower 1s group [0...l-2], j is higher 1s group [1...l-1]
               term mask=minterms[ones][i] ^ minterms[ones+1][j];
               // std::cout << "mask is "<<mask <<" | "<<!(mask & (mask-1))<< '\n';
-              if(!(mask & (mask-1))){ //check if mask is power of 2, *0 will always be false
+              if(isPower2(mask)){ //check if mask is power of 2, *0 will always be false
                 // i&j can be simplifted
                 used[ones][i]=true;
                 used[ones+1][j]=true;
@@ -102,7 +121,8 @@ struct intermittent{
                   // std::cout << "mask used "<<std::bitset<8>(mask) << '\n';
 
                 }else{
-                  std::cout <<"mask is "<< std::bitset<8>(mask) << '\n';
+                  std::cout <<"mask is \n";
+                  printMinterm(mask);
                   //mask not exist, make new
                   intermittent* itmPtr=new intermittent();
                   itmPtr->construct(mask,max1s-1);
@@ -149,8 +169,9 @@ struct intermittent{
 };
 
 struct bitCount{
+
   int space;//space for count of single bit, (least to avoid overflow)
-  std::vector<uint64_t> count;//can be optimsed, current method waste higher bit when length is small, merge term for large operation
+  std::vector<wd> count;//can be optimsed, current method waste higher bit when length is small, merge term for large operation
 
   void construct(const std::vector<implicant>& in) {
     // std::cout << "****require 64 bit long******" << '\n';
@@ -158,21 +179,24 @@ struct bitCount{
     // std::cout << "space is "<<space << '\n';
 
     //set up correct mask
-    uint64_t mask=1;
-    for(int i=space;i<64;){
+    wd mask=1;
+    for(int i=space;i<wdlength;){
       mask=mask|(mask<<(i));
       i=i*2;
     }
     // std::cout << "mask is "<<std::bitset<64>(mask) << '\n';
 
-    //cacualte the vec
-    count.reserve(space);
-    uint64_t tm=in[0].mask;
+    int maxZone=in[0].mask.size();
+    count.reserve(space*maxZone);//BUG mut by the size of term (when its vector)
 
+    term tm=in[0].mask;
     //1st
-    for(int j=0;j<space;j++){
-      count.push_back( (tm>>j) & (mask) );
-      // std::cout << count[j] << '\n';
+    for(int z=0;z<maxZone;++z){
+      for(int j=0;j<space;j++){
+        count.push_back( (tm[z]>>j) & (mask) );
+        // std::cout << count[j] << '\n';
+      }
+
     }
     // std::cout << "first count is" << '\n';
     // for(int i=0;i<count.size();i++){
@@ -181,8 +205,10 @@ struct bitCount{
     //after 1
     for(int i=1;i<in.size();i++){
       tm=in[i].mask;
-      for(int j=0;j<space;j++){
-        count[j]=count[j]+ ((tm>>j) & (mask));
+      for(int z=0;z<maxZone;++z){
+        for(int j=0;j<space;j++){
+          count[j+z*space]+= ((tm[z]>>j) & (mask));
+        }
       }
       // std::cout << i<<" count is" << '\n';
       // for(int xx=0;xx<count.size();xx++){
@@ -192,14 +218,17 @@ struct bitCount{
     }
   }
 
-  int get(int digit){
-    uint64_t shift=digit/space*space;
+  unsigned int get(int digit){
+    int zone=digit/wdlength;
+    digit=digit%wdlength;
+    int shift=digit/space*space;
     // std::cout << "shift is "<<shift << '\n';
     // std::cerr << (((long)1<<(space+1))-1) << '\n';
-    return (count[digit%space]>>shift) &  ((1ULL<<(space))-1);//(((long)1<<(space+1))-1) produce a mask of 1 [from LSB to space], x^(space+1)-1
+    return (count[zone*space+digit%space]>>shift) &  ((1ULL<<(space))-1);//(((long)1<<(space+1))-1) produce a mask of 1 [from LSB to space], x^(space+1)-1
   }
 
 };
+
 
 typedef bdnode* bdt;
 typedef std::map<term,intermittent*> ItmList;
@@ -210,20 +239,21 @@ typedef std::map<term, std::vector<implicant>> PIchart;
   template <class T>
   void printV(std::vector<T>& v, char end='\n', char m=' ');
 
+
   template <class T>
   void printBit(std::vector<T>& v, char end='\n', char m=' ');
 
   template <class T>
   int find(std::vector<T>& v, T a);
 
-  void genInput(std::vector<term>& in,int digit,std::vector<std::string>& out);
+  void genInput(std::vector<wd>& in,int digit,std::vector<std::string>& out);
   void printTree(bdt t, int depth);
   void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out);
-  bool testCorrectness(bdt rt, std::vector<term> correct);
+  bool testCorrectness(bdt rt, const std::vector<wd>& correct);
   int getTreeNodeNum(bdnode*  t);
   void getTreeNodeNumRec(bdnode*  t,int& count);
   std::string getMinterm(term i);
-  uint64_t getAss1NodeNum();
+  double getAss1NodeNum();
 
   void appedPrime(std::string str, std::vector<implicant>& primes,bool fval=true);
 
@@ -236,7 +266,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues);
 std::string evalcompactbdt(bdt t, const std::string& input);
 
 bdt newnode(std::string val=std::string(), bdt left=NULL, bdt right=NULL );
-void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRemains);
+void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, const term& nodeRemains);
 // inline int uint64_tt(long a);
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms);
 bool is1(char c);
@@ -270,11 +300,9 @@ bool is1(char c);
 
 
 int main(){
-  #define bitsize 64
-  #define startwithPI false
-  #define outputToFile false
 
-  std::vector<term> input;
+
+  std::vector<wd> input;
   input={0,1,2,5,6,7,8,9,10,14};
   // input={4, 7, 8, 15, 20, 21, 26, 29, 30, 32, 35, 38, 43, 45, 46, 49, 52, 54, 55, 56, 57, 58, 59, 60, 62, 63, 64, 68, 69, 71, 72, 74, 77, 80, 82, 84, 88, 89, 90, 91, 92, 94, 95, 96, 100, 104, 105, 106, 109, 110, 111, 114, 115, 117, 121, 123, 126, 127, 129, 131, 132, 133, 137, 138, 139, 142, 143, 145, 146, 147, 150, 152, 153, 158, 160, 162, 163, 165, 166, 167, 168, 170, 171, 172, 173, 176, 177, 178, 179, 181, 183, 185, 186, 188, 190, 191, 195, 196, 197, 200};
   // 6 input={0, 2, 4, 8, 9, 10, 11, 12, 16, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 39, 40, 44, 46, 49, 51, 52, 61, 63};
@@ -323,17 +351,40 @@ std::cerr <<'\n';
 }
 
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms){ //checked order right
+  int numwd=fvalues[0].size()/wdlength;
+  int lastlen=fvalues[0].size()%wdlength;
   for(int i=0;i<fvalues.size();i++){
-    int minterm=0;
-    for(int p=fvalues[0].size()-1;p>=0;--p){
+    term minterm(numwd+1,0);
+    int p=fvalues[0].size()-1;
+
+    //MS wd
+    wd word=0;
+    for(int z=lastlen-1;z>=0;--z){
       if(is1(fvalues[i][p])){
-        minterm=minterm*2+1;
+        word=word*2+1;
       }else{
-        minterm=minterm*2;
+        word=word*2;
       }
+      --p;
     }
-    std::cout << "from Xn <-- X1: ";
-    std::cout << std::bitset<bitsize>(minterm) << '\n';
+    minterm[numwd]=word;
+
+    //less siginficant wd
+    while (p>=0) {
+      wd word=0;
+      for(int z=wdlength-1;z>=0;--z){
+        if(is1(fvalues[i][p])){
+          word=word*2+1;
+        }else{
+          word=word*2;
+        }
+        --p;
+      }
+
+      minterm[(p+1)/wdlength]=word;
+    }
+      std::cout << minterm[0] << '\n';
+    printMinterm(minterm);
     minterms[i]=minterm;
   }
 }
@@ -367,6 +418,25 @@ bdt newnode(std::string val, bdt left, bdt right){
   return pt;
 }
 
+bool isPower2(const term& v){
+  bool alreadyPw2=false;
+  for(int i=0;i<v.size();++i){
+    if(v[i] != 0){
+      if((v[i] & (v[i] - 1))){//if is pw2, x&(x-1) is 0
+        //when is not pw2
+        return false;
+      }else{
+        //when is  pw2
+        if(alreadyPw2){
+          return false;
+        }
+        alreadyPw2=true;
+      }
+    }
+  }
+  return alreadyPw2; //will return true if is not all 0
+}
+
 // modeified from https://stackoverflow.com/questions/23856596/how-to-count-leading-zeros-in-a-32-bit-unsigned-integer
 inline int leading1(uint64_t x){ ///01000 returns 4
   x=x|(x>>1);
@@ -391,6 +461,13 @@ inline int popcount(uint64_t x){
     x = (x + (x >> 4)) & m4;        //put count of each 8 bits into those 8 bits
     return (x * h01) >> 56;  //returns left 8 bits of x + (x<<8) + (x<<16) + (x<<24) + ...
 
+}
+int popcount(const term& v){
+  int count=0;
+  for(term::const_iterator it=v.begin(); it!=v.end(); ++it){
+    count+=popcount(*it);
+  }
+  return count;
 }
 
 
@@ -418,16 +495,17 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
             // std::cout << "process first pass" << '\n';
             std::cerr << "pepare to gen prime implicant" << '\n';
             intermittent* itmPtr=new intermittent();
-            itmPtr->construct(0,fvalues[0].size());
+            term zeroMask(fvalues[0].size(),0);
+            itmPtr->construct(zeroMask,fvalues[0].size());
             for(int i=0;i<minterms.size();i++){
               itmPtr->add(minterms[i]);
             }
             std::cerr << "gen prime implicant" << '\n';
-            itmPtr->compareAll(0,primes,itmList);
+            itmPtr->compareAll(zeroMask,primes,itmList);
 
             delete itmPtr;
 
-            //all other path
+            //all other pass
             while (!itmList.empty()) {//!itmList.empty()
               // std::cout << "process "<<debugcount<<" pass" << '\n';
               ItmList tempList;
@@ -450,9 +528,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 
 
             std::cout << "\n====================================\nsimplifted min term are:" << '\n';
-            for(int x=0;x<primes.size();x++){
-              std::cout << "mask: "<<std::bitset<bitsize>(primes[x].mask)<<" minterm: " <<std::bitset<bitsize>(primes[x].minterm)<< '\n';
-            }
+
             for(int x=0;x<primes.size();x++){
               printPrime(primes[x].mask,primes[x].minterm,fvalues[0].size());
             }
@@ -485,17 +561,29 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     //make tree
     bdt rootpt = newnode();
 
-    term tempNodeRemains=(signed long long)-1; //strange behavier of  1ULL<<fvalues[0].size() evaulated as 1 when size is 64???? should be 0
-    if(fvalues[0].size()<64){
-      tempNodeRemains=(1ULL<<fvalues[0].size())-1;
+    term nodeRemains;
+    int numwd=fvalues[0].size()/wdlength;
+    int lastlen=fvalues[0].size()%wdlength;
+
+    for(int i=0;i<numwd;++i){
+      nodeRemains.push_back(wdMax);
     }
-    std::cout << "defualt node"<<std::bitset<64>(tempNodeRemains) << '\n';
-    recTreeConstructor(rootpt,primes,tempNodeRemains);
+
+    if(lastlen>0){
+      nodeRemains.push_back((1ULL<<lastlen)-1);
+    }
+
+    // term tempNodeRemains=(signed long long)-1; //strange behavier of  1ULL<<fvalues[0].size() evaulated as 1 when size is 64???? should be 0
+    // if(fvalues[0].size()<64){
+    //   tempNodeRemains=(1ULL<<fvalues[0].size())-1;
+    // }
+    // std::cout << "defualt node"<<std::bitset<64>(tempNodeRemains) << '\n';
+    recTreeConstructor(rootpt,primes,nodeRemains);
 
     return rootpt;
 }
 
-void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRemains){//nodeRemains => 0 for not used node, 1 for used node
+void recTreeConstructor(bdnode* node,std::vector<implicant>& primes,const term& nodeRemains){//nodeRemains => 0 for not used node, 1 for used node
   if(primes.size()==0){
     //check if case for 0, empty primes
     node->val="0";
@@ -506,8 +594,8 @@ void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRe
     //check if case for 1, one prime with --------
     int maxMaskCount=popcount(nodeRemains);
     // std::cout << "/* maxMaskCount */"<<maxMaskCount << '\n';
-    std::cout << std::bitset<64>(nodeRemains) << '\n';
-    std::vector<int> maskCount(primes.size(),0);
+    printMinterm(nodeRemains);
+    std::vector<int> maskCount(primes.size(),0);//TODO this vec can be removec
     for(int i=0;i<primes.size();i++){
       // std::cout << "/* message */" << '\n';
       int cm=popcount(primes[i].mask);
@@ -528,16 +616,20 @@ void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRe
 
     // hestristc, find node to chooice as mask next
     // direction of scan MSB <-- <-- LSB
-    bitCount cnt; //no need to in struct move it to function
+    bitCount cnt;
     unsigned int mincount=(int)-1;//get 0xffff....
     int optimalDigit;
 
     cnt.construct(primes);
     int counter=popcount(nodeRemains);
     int digit=0;
-    // std::cout << "rec" << '\n';
+        // std::cout << "rec" << '\n';
+
+
+
+
     while (counter>0) {
-      if((1ULL<<digit)&nodeRemains){
+      if((1ULL<<(digit%wdlength))&nodeRemains[digit/wdlength]){
         counter--;
         //node that is not in the tree, chooice between these
         // std::cout << "digit"<<digit<<": "<<cnt.get(digit) << '\n';
@@ -549,19 +641,27 @@ void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRe
       }
       digit++;
     }
+
+
+
     node->val="x"+std::to_string(optimalDigit+1);
 
     //RecCall, maske sub tree
     std::vector<implicant> leftPrimes;//left node, 0
     std::vector<implicant> rightPrimes;//right node, 1
-    term optimalMask=1ULL<<optimalDigit;
+
+    wd optimalWord=1ULL<<(optimalDigit%wdlength);
+    int optimalNum=optimalDigit/wdlength;
+    term NotOptimalMask(nodeRemains.size(),wdMax);
+    NotOptimalMask[optimalNum]=~optimalWord;
+
     for(int i=0;i<primes.size();i++){
-      if( (primes[i].minterm&optimalMask)==0){
+      if( (primes[i].minterm[optimalNum]&optimalWord)==0){
         //when minterm[digit]==0, mask[digit] may =1
-        if( (primes[i].mask&optimalMask)!=0 ){
+        if( (primes[i].mask[optimalNum]&optimalWord)!=0 ){
           //mask is one, need normalise mask and copy to both right & left listLb
           implicant temp=primes[i];
-          temp.mask=temp.mask & (~optimalMask);
+          temp.mask=temp.mask & NotOptimalMask;
           leftPrimes.push_back(temp);
           rightPrimes.push_back(temp);
         }else{
@@ -575,11 +675,14 @@ void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRe
     }
 
     // node->val="x"+
+    term nextNodeRemains=nodeRemains;
+    nextNodeRemains[optimalNum]=nextNodeRemains[optimalNum] & (~optimalWord);
+
     node->left=newnode();
-    recTreeConstructor(node->left,leftPrimes, nodeRemains& (~optimalMask));
+    recTreeConstructor(node->left,leftPrimes, nextNodeRemains);
 
     node->right=newnode();
-    recTreeConstructor(node->right,rightPrimes, nodeRemains& (~optimalMask));
+    recTreeConstructor(node->right,rightPrimes, nextNodeRemains);
   }
 }
 
@@ -598,13 +701,56 @@ std::string evalcompactbdt(bdt t, const std::string& input){
 }
 
 
+//overload operator
+//NOTE:: Have contact Max for exception of return vector in overload function below
+term operator~(const term& v1){
+  term out;
+  out.reserve(v1.size());
+  for(term::const_iterator it=v1.begin(); it!=v1.end(); ++it){
+    out.push_back(~(*it));
+  }
+  return out;
+}
+term operator&(const term& v1,const term& v2){
+  term out;
+  out.reserve(v1.size());
+  for(int i=0;i<v1.size();++i){
+    out.push_back(v1[i]&v2[i]);
+  }
+  return out;
+}
+term operator|(const term& v1,const term& v2){
+  term out;
+  out.reserve(v1.size());
+  for(int i=0;i<v1.size();++i){
+    out.push_back(v1[i]|v2[i]);
+  }
+  return out;
+}
+term operator^(const term& v1,const term& v2){
+  term out;
+  out.reserve(v1.size());
+  for(int i=0;i<v1.size();++i){
+    out.push_back(v1[i]^v2[i]);
+  }
+  return out;
+}
+
 
 
 /// add here the implementation for any other functions you wish to define and use
 //DEBUG FUNC
+void printMinterm(const term& minterm){
+std::cout << "from Xn <-- X1: ";
+for(int i=minterm.size()-1;i>=0;--i){
+
+  std::cout << std::bitset<wdlength>(minterm[i])<<' ';
+}
+std::cout << '\n';
+}
 void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
-  term mask=0;
-  term minterm=0;
+  wd mask=0;
+  wd minterm=0;
   // term printmask=1;
   if(fval){
     for(int i=0;i<str.length();i++){
@@ -624,8 +770,8 @@ void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
     }
   }
 
-  primes.push_back((implicant){mask,minterm});
-  printPrime(mask,minterm,bitsize);
+  primes.push_back((implicant){{mask},{minterm}});
+  printPrime({mask},{minterm},bitsize);
 }
 
   template <class T>
@@ -639,7 +785,7 @@ void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
     return -1;
   }
 
-  std::string getMinterm(term i){
+  std::string getMinterm(wd i){
     uint64_t printmask=1;
     std::string temp;
     for(int j=0;j<bitsize;j++){
@@ -669,25 +815,48 @@ void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
     std::cout << end;
   }
 
-  void printPrime(term mask,term minterm,int len,char end){
-    term printmask=1;
+  void printPrime(const term& mask,const term& minterm, int len, char end){
+    wd printmask=1;
+    int numWord=len/wdlength;
+    int lastlen=len%wdlength;
+
     std::cout << "from Xn <-- X1: ";
-    for(int i=len-1;i>=0;i--){
-      if(mask&(printmask<<(i))){
+
+    for(int i=lastlen-1;i>=0;i--){
+      if(mask[numWord]&(printmask<<(i))){
         std::cout<<'-';
       }else{
-        if(minterm&(printmask<<(i))){
+        if(minterm[numWord]&(printmask<<(i))){
           std::cout<<'1';
         }else{
           std::cout<<'0';
         }
       }
     }
+
+    numWord--;
+
+    while (numWord>=0) {
+      std::cout << " " << '\n';
+      for(int i=wdlength-1;i>=0;i--){
+        if(mask[numWord]&(printmask<<(i))){
+          std::cout<<'-';
+        }else{
+          if(minterm[numWord]&(printmask<<(i))){
+            std::cout<<'1';
+          }else{
+            std::cout<<'0';
+          }
+        }
+      }
+      numWord--;
+    }
+
     std::cout << end;
   }
 
-  void genInput(std::vector<term>& in,int digit,std::vector<std::string>& out){
-    term printmask=1;
+  void genInput(std::vector<wd>& in,int digit,std::vector<std::string>& out){
+    wd printmask=1;
     for(int i=0;i<in.size();i++){
       std::string temp;
       for(int j=0;j<digit;j++){
@@ -702,8 +871,8 @@ void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
     }
   }
 
-  uint64_t getAss1NodeNum(){
-    return (1ULL<<bitsize+1)-1;
+  double getAss1NodeNum(){
+    return(pow(2.0,bitsize+1)-1);
   }
 
   void deltree(bdt t){
@@ -753,16 +922,16 @@ void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
 
   }
 
-  bool testCorrectness(bdt rt, std::vector<term> correct){
+  bool testCorrectness(bdt rt, const std::vector<wd>& correct){
     std::cerr << "test start" << '\n';
-    term max=(1ULL<<bitsize)-1;
-    std::vector<term> outTerm;
+    wd max=(1ULL<<bitsize)-1;
+    std::vector<wd> outTerm;
     std::vector<bool> outBool;
     outTerm.reserve(correct.size());
     outBool.reserve(correct.size());
 
 
-    for(term i=0;i<=max;i++){
+    for(wd i=0;i<=max;i++){
       std::string temp=getMinterm(i);
 
       if(is1(evalcompactbdt(rt,temp)[0])){
