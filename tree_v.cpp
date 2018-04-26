@@ -1,7 +1,7 @@
 //use c++11
 //in term:: MSB(xmsb).x4.x3.x2.x1.LSB(x0)
 
-#define bitsize 64
+#define bitsize 5
 #define startwithPI false
 #define outputToFile false
 
@@ -73,7 +73,8 @@ struct intermittent{
         minterms.push_back(std::vector<term>());
         used.push_back(std::vector<bool>());
       }
-
+      std::cout << "(((((((((((((((((((((/* message */)))))))))))))))))))))" << '\n';
+      printMinterm(baseNot);
     };
 
     void add(term minterm) {
@@ -121,8 +122,8 @@ struct intermittent{
                   // std::cout << "mask used "<<std::bitset<8>(mask) << '\n';
 
                 }else{
-                  std::cout <<"mask is \n";
-                  printMinterm(mask);
+                  // std::cout <<"mask is \n";
+                  // printMinterm(mask);
                   //mask not exist, make new
                   intermittent* itmPtr=new intermittent();
                   itmPtr->construct(mask,max1s-1);
@@ -249,10 +250,10 @@ typedef std::map<term, std::vector<implicant>> PIchart;
   void genInput(std::vector<wd>& in,int digit,std::vector<std::string>& out);
   void printTree(bdt t, int depth);
   void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out);
-  bool testCorrectness(bdt rt, const std::vector<wd>& correct);
+  void testCorrectness(bdt rt, const std::vector<wd>& correct);
   int getTreeNodeNum(bdnode*  t);
   void getTreeNodeNumRec(bdnode*  t,int& count);
-  std::string getMinterm(term i);
+  std::string getMinterm(wd i);
   double getAss1NodeNum();
 
   void appedPrime(std::string str, std::vector<implicant>& primes,bool fval=true);
@@ -303,7 +304,8 @@ int main(){
 
 
   std::vector<wd> input;
-  input={0,1,2,5,6,7,8,9,10,14};
+  // input={0,2,4,8,9,10,11,12,16,21,22,23,24,25,26,27,28,29,30,31,32,39,40,44,46,49,51,52,61,63};
+input={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
   // input={4, 7, 8, 15, 20, 21, 26, 29, 30, 32, 35, 38, 43, 45, 46, 49, 52, 54, 55, 56, 57, 58, 59, 60, 62, 63, 64, 68, 69, 71, 72, 74, 77, 80, 82, 84, 88, 89, 90, 91, 92, 94, 95, 96, 100, 104, 105, 106, 109, 110, 111, 114, 115, 117, 121, 123, 126, 127, 129, 131, 132, 133, 137, 138, 139, 142, 143, 145, 146, 147, 150, 152, 153, 158, 160, 162, 163, 165, 166, 167, 168, 170, 171, 172, 173, 176, 177, 178, 179, 181, 183, 185, 186, 188, 190, 191, 195, 196, 197, 200};
   // 6 input={0, 2, 4, 8, 9, 10, 11, 12, 16, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 39, 40, 44, 46, 49, 51, 52, 61, 63};
   // input={0, 2, 3, 5, 6, 9, 10, 11, 12, 13, 15, 17, 18, 19, 21, 27, 28, 30, 32, 34, 35, 36, 41, 42, 43, 44, 47, 51, 52, 56, 57, 58, 63, 67, 69, 70, 74, 76, 77, 78, 79, 81, 88, 89, 91, 93, 94, 97, 98, 99, 101, 103, 106, 107, 110, 112, 113, 114, 118, 119, 126, 127, 128, 129, 131, 132, 133, 134, 135, 137, 141, 142, 144, 145, 147, 148, 149, 151, 152, 154, 158, 159, 163, 165, 166, 167, 168, 170, 171, 172, 174, 175, 176, 178, 181, 182, 183, 185, 187, 188, 189, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 205, 206, 210, 214, 218, 219, 220, 221, 222, 223, 228, 229, 231, 232, 235, 236, 241, 245, 249, 250, 251, 252, 254, 258, 262, 265, 266, 267, 269, 270, 271, 273, 274, 280, 282, 285, 289, 290, 291, 292, 298, 301, 302, 304, 306, 307, 308, 310, 312, 313, 316, 317, 318, 319, 320, 321, 323, 325, 327, 328, 331, 338, 339, 340, 346, 348, 350, 352, 354, 355, 358, 359, 360, 363, 364, 369, 370, 373, 375, 380, 382, 385, 386, 387, 391, 392, 393, 396, 397, 400, 403, 405, 409, 411, 413, 414, 416, 417, 419, 421, 423, 424, 425, 426, 427, 429, 431, 435, 437, 439, 442, 443, 444, 448, 450, 452, 454, 456, 460, 461, 463, 465, 469, 472, 474, 475, 477, 478, 479, 485, 486, 487, 489, 492, 493, 496, 499, 500, 501, 503, 511, 512, 513, 519, 520, 521, 522, 525, 527, 531, 532, 534, 535, 536, 541, 543, 546, 548, 549, 550, 551, 554, 555, 556, 557, 558, 561, 563, 564, 567, 568, 569, 573, 574, 575, 576, 577, 580, 582, 583, 584, 586, 588, 590, 591, 593, 594, 596, 598, 601, 609, 611, 613, 615, 617, 620, 625, 628, 629, 630, 631, 632, 633, 634, 635, 640, 643, 644, 647, 648, 649, 650, 652, 654, 655, 657, 658, 659, 660, 661, 662, 667, 668, 670, 671, 672, 673, 675, 682, 686, 689, 690, 701, 702, 704, 706, 707, 708, 709, 710, 712, 713, 714, 719, 720, 722, 727, 728, 731, 732, 733, 735, 736, 737, 739, 740, 743, 744, 745, 746, 748, 751, 753, 756, 760, 763, 764, 765, 767, 769, 770, 772, 773, 774, 776, 778, 781, 782, 783, 784, 787, 788, 789, 790, 791, 794, 798, 799, 800, 801, 802, 803, 804, 807, 809, 812, 813, 818, 820, 822, 823, 825, 827, 828, 829, 830, 831, 832, 834, 836, 837, 838, 840, 842, 843, 844, 845, 846, 848, 849, 852, 854, 856, 857, 859, 860, 863, 864, 865, 866, 867, 872, 873, 874, 875, 878, 879, 880, 881, 882, 885, 886, 888, 890, 895, 896, 902, 904, 905, 907, 908, 909, 910, 913, 915, 919, 921, 922, 923, 924, 925, 929, 932, 933, 934, 935, 938, 939, 945, 951, 952, 954, 956, 957, 962, 963, 966, 967, 968, 969, 971, 975, 981, 982, 984, 986, 991, 997, 1000};
@@ -333,7 +335,7 @@ int main(){
   //
   // std::cout << evalcompactbdt(fbdt,"1111") << '\n';
 
-  // testCorrectness(fbdt,input);
+  testCorrectness(fbdt,input);
 
   printTree(fbdt,fvalues[0].size()+1);
 std::cerr <<'\n';
@@ -383,8 +385,8 @@ void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& mint
 
       minterm[(p+1)/wdlength]=word;
     }
-      std::cout << minterm[0] << '\n';
-    printMinterm(minterm);
+    //   std::cout << minterm[0] << '\n';
+    // printMinterm(minterm);
     minterms[i]=minterm;
   }
 }
@@ -495,7 +497,7 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
             // std::cout << "process first pass" << '\n';
             std::cerr << "pepare to gen prime implicant" << '\n';
             intermittent* itmPtr=new intermittent();
-            term zeroMask(fvalues[0].size(),0);
+            term zeroMask(fvalues[0].size()/wdlength+1,0);
             itmPtr->construct(zeroMask,fvalues[0].size());
             for(int i=0;i<minterms.size();i++){
               itmPtr->add(minterms[i]);
@@ -573,11 +575,18 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
       nodeRemains.push_back((1ULL<<lastlen)-1);
     }
 
+    for(int o=0;o<primes.size();o++){
+      printMinterm(primes[o].minterm);
+    }
+
     // term tempNodeRemains=(signed long long)-1; //strange behavier of  1ULL<<fvalues[0].size() evaulated as 1 when size is 64???? should be 0
     // if(fvalues[0].size()<64){
     //   tempNodeRemains=(1ULL<<fvalues[0].size())-1;
     // }
     // std::cout << "defualt node"<<std::bitset<64>(tempNodeRemains) << '\n';
+    std::cout << "\n\n==================================\nstart building tree, with node in consideration\n";
+    printMinterm(nodeRemains);
+    std::cout << '\n';
     recTreeConstructor(rootpt,primes,nodeRemains);
 
     return rootpt;
@@ -593,12 +602,16 @@ void recTreeConstructor(bdnode* node,std::vector<implicant>& primes,const term& 
 
     //check if case for 1, one prime with --------
     int maxMaskCount=popcount(nodeRemains);
+    // std::cout << "maxMaskCount "<<maxMaskCount << '\n';
     // std::cout << "/* maxMaskCount */"<<maxMaskCount << '\n';
-    printMinterm(nodeRemains);
+    // printMinterm(nodeRemains);
     std::vector<int> maskCount(primes.size(),0);//TODO this vec can be removec
     for(int i=0;i<primes.size();i++){
       // std::cout << "/* message */" << '\n';
       int cm=popcount(primes[i].mask);
+      // printMinterm(primes[i].mask);
+      // std::cout << "cm "<<cm << '\n';
+
       if(cm==maxMaskCount){
         node->val="1";
         return; //terminate loop
@@ -922,7 +935,7 @@ void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
 
   }
 
-  bool testCorrectness(bdt rt, const std::vector<wd>& correct){
+  void testCorrectness(bdt rt, const std::vector<wd>& correct){
     std::cerr << "test start" << '\n';
     wd max=(1ULL<<bitsize)-1;
     std::vector<wd> outTerm;
@@ -963,6 +976,8 @@ void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
     }
 
     std::cout << "\nend of errors" << '\n';
+
+
   }
 
 //END DEBUG FUNC

@@ -148,7 +148,10 @@ struct intermittent{
     }
 };
 
-struct bitCount{
+struct bitCount{  //need remake~~~~
+  //for this function, do count recurseively for each unit64_t term (first 64, than later 64) etc
+  //also take input of nodeRemains, and only count these???? (difficult opt for time)
+
   int space;//space for count of single bit, (least to avoid overflow)
   std::vector<uint64_t> count;//can be optimsed, current method waste higher bit when length is small, merge term for large operation
 
@@ -166,7 +169,7 @@ struct bitCount{
     // std::cout << "mask is "<<std::bitset<64>(mask) << '\n';
 
     //cacualte the vec
-    count.reserve(space);
+    count.reserve(space);//BUG mut by the size of term (when its vector)
     uint64_t tm=in[0].mask;
 
     //1st
@@ -270,7 +273,7 @@ bool is1(char c);
 
 
 int main(){
-  #define bitsize 30
+  #define bitsize 20
   #define startwithPI false
   #define outputToFile false
 
@@ -324,7 +327,7 @@ std::cerr <<'\n';
 
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms){ //checked order right
   for(int i=0;i<fvalues.size();i++){
-    term minterm=0;
+    int minterm=0;
     for(int p=fvalues[0].size()-1;p>=0;--p){
       if(is1(fvalues[i][p])){
         minterm=minterm*2+1;
@@ -496,7 +499,6 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
 }
 
 void recTreeConstructor(bdnode* node,std::vector<implicant>& primes, term nodeRemains){//nodeRemains => 0 for not used node, 1 for used node
-std::cout << std::bitset<64>(nodeRemains) << '\n';
   if(primes.size()==0){
     //check if case for 0, empty primes
     node->val="0";

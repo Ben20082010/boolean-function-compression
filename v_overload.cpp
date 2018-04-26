@@ -316,7 +316,12 @@ void checkGenminterm();
 void checkCountbit();
 int main(int argc, char const *argv[]) {
   // checkCountbit();
-checkBitwise();
+// checkBitwise();
+term x={1,1};
+term y={2,3};
+term z={10,10};
+x=y^z;
+printMinterm(x);
 // term NotoptimalMask(3,wdMax);
 // printMinterm(NotoptimalMask);
 
