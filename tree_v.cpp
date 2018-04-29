@@ -9,7 +9,7 @@
 #include <map>
 #include <stdlib.h>
 
-//for DEBUG
+// //for DEBUG
 #include <chrono>
 #include <math.h>
 #include <iostream>
@@ -22,10 +22,10 @@ typedef uint64_t wd;
 typedef std::vector<wd> term;
 
 
-//DEBUG config
-#define bitsize 15
-#define startwithPI false
-#define outputToFile false
+// //DEBUG config
+// #define bitsize 15
+// #define startwithPI false
+// #define outputToFile false
 
 //function used by struct
 term operator~(const term& v1);
@@ -40,10 +40,10 @@ inline int popcount(const term& v);
 inline int leading1(uint64_t x);
 bool isPower2(const term& v);
 
-//DEBUG functions
-void printPrime(const term& mask,const term& minterm, int len=bitsize, char end='\n');
-void printMinterm(const term& minterm);
-//END DEBUG functions
+// //DEBUG functions
+// void printPrime(const term& mask,const term& minterm, int len=bitsize, char end='\n');
+// void printMinterm(const term& minterm);
+// //END DEBUG functions
 
 struct bdnode{
   std::string val;
@@ -87,7 +87,7 @@ struct intermittent{
 
 
   };
-  void compareAll(term basemask, std::vector<implicant>& primes,std::map<term,intermittent*>& itmList){
+  void compareAll(const term& basemask, std::vector<implicant>& primes,std::map<term,intermittent*>& itmList){
     std::map<term,intermittent*>::iterator listLb;
 
     for(int ones=0;ones<minterms.size()-1;ones++){
@@ -211,32 +211,32 @@ typedef std::map<term,intermittent*> ItmList;
 typedef std::map<term, std::vector<implicant>> PIchart;
 
 
-//DEBUG FUNC
-template <class T>
-void printV(std::vector<T>& v, char end='\n', char m=' ');
-
-template <class T>
-int find(std::vector<T>& v, T a);
-void genInput(std::vector<wd>& in,int digit,std::vector<std::string>& out);
+// //DEBUG FUNC
+// template <class T>
+// void printV(std::vector<T>& v, char end='\n', char m=' ');
+//
+// template <class T>
+// int find(std::vector<T>& v, T a);
+// void genInput(std::vector<wd>& in,int digit,std::vector<std::string>& out);
 void printTree(bdt t, int depth);
 void printTreeRec( bdnode*  t, int depth,std::vector<std::string>& out);
-void testCorrectness(bdt rt, const std::vector<wd>& correct);
+// void testCorrectness(bdt rt, const std::vector<wd>& correct);
 int getTreeNodeNum(bdnode*  t);
 void getTreeNodeNumRec(bdnode*  t,int& count);
-std::string getMinterm(wd i);
-double getAss1NodeNum(int size);
-void appedPrime(std::string str, std::vector<implicant>& primes,bool fval=true);
-void deltree(bdt t);
-//END DEBUG FUNC
+// std::string getMinterm(wd i);
+// double getAss1NodeNum(int size);
+// void appedPrime(std::string str, std::vector<implicant>& primes,bool fval=true);
+// void deltree(bdt t);
+// //END DEBUG FUNC
 
 /// do not alter these two function declarations
 bdt buildcompactbdt(const std::vector<std::string>& fvalues);
 std::string evalcompactbdt(bdt t, const std::string& input);
 
 ///functions for the implementation of buildcompactbdt and evalcompactbdt
-bdt newnode(std::string val=std::string(), bdt left=NULL, bdt right=NULL );
-void recTreeConstructor(bdnode* node,const std::vector<implicant>& primes, const term& nodeRemains);
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms);
+bdt newnode(std::string val=std::string(), bdt left=NULL, bdt right=NULL );
+void recTreeConstructor(bdt node,const std::vector<implicant>& primes, const term& nodeRemains);
 bool is1(char c);
 
 
@@ -250,9 +250,9 @@ int main(){
   // input={40, 51, 37, 38, 27, 50, 14, 5, 42, 53, 61, 20, 21, 16, 15, 22, 63, 30, 25, 47, 6, 19, 17, 23, 13, 56, 26, 9, 52, 45, 24, 12, 1, 7, 62, 41, 28, 32, 58, 8, 0, 29, 39, 35, 43, 60, 57, 59, 11, 31, 3, 44, 54, 46, 36, 4, 48, 2, 34, 18};
   // input={104, 89, 69, 74, 25, 31, 23, 75, 57, 81, 0, 13, 60, 61, 119, 71, 79, 46, 124, 93, 22, 32, 112, 39, 102, 94, 41, 28, 101, 64, 17, 77, 21, 35, 83, 99, 88, 54, 53, 26, 92, 18, 55, 36, 48, 125, 68, 91, 49, 42, 4, 33, 27, 44, 84, 107, 12, 6, 34, 66, 123, 113, 5, 30, 16, 38, 116, 15, 29, 37, 97, 115, 73, 62, 78, 96, 87, 50, 63, 45, 8, 7, 10, 100, 11, 19, 105, 82, 76, 20, 9, 98, 108, 1, 52, 51, 2, 118, 120, 110, 122, 59, 103, 86, 109, 3, 58, 65, 126, 106, 95, 80, 70, 72, 90, 127, 114, 56, 121, 67, 85, 111, 14, 117, 40, 47, 24, 43};
   // input={0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
-  if(outputToFile){
-    freopen("output.txt","w",stdout);
-  }
+  // if(outputToFile){
+  //   freopen("output.txt","w",stdout);
+  // }
 
   // std::vector<std::string> fvalues={"000000","000001","000100","001000","000101","001010","001100","100100","001101","001110","110010","001111"};
   std::vector<std::string> fvalues={
@@ -264,7 +264,7 @@ int main(){
   // std::vector<std::string> fvalues;
   // genInput(input,bitsize,fvalues);
   // printV(input);
-  printV(fvalues);
+  // printV(fvalues);
 
   auto begin = std::chrono::high_resolution_clock::now();
   bdt fbdt=buildcompactbdt(fvalues);
@@ -281,12 +281,13 @@ int main(){
   std::cout<<evalcompactbdt(fbdt,"100010101010000011001111111111111100000000000000000011111111111111111111110000000000000000111111111100000000000000100000000000000")<<'\n';
 
   double nodeNum=getTreeNodeNum(fbdt);
-  std::cout << "\n\n the tree has "<<nodeNum << " nodes\ncompare to tree in ass1 require "<<getAss1NodeNum(fvalues[0].size())<<" node\nreduced by "<<((getAss1NodeNum(fvalues[0].size())-nodeNum)*100/getAss1NodeNum(fvalues[0].size()))<<"%\n";
+  std::cout << nodeNum << '\n';
+  // std::cout << "\n\n the tree has "<<nodeNum << " nodes\ncompare to tree in ass1 require "<<getAss1NodeNum(fvalues[0].size())<<" node\nreduced by "<<((getAss1NodeNum(fvalues[0].size())-nodeNum)*100/getAss1NodeNum(fvalues[0].size()))<<"%\n";
   double t=std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count();
   std::cout << "\n the buildcompactbdt function takes "<< t/1000000 << "ms\n";
   std::cerr <<'\n';
 
-  deltree(fbdt);
+  // deltree(fbdt);
   return 0;
 }
 
@@ -378,12 +379,12 @@ bdt buildcompactbdt(const std::vector<std::string>& fvalues){
     nodeRemains.push_back((1ULL<<lastlen)-1);
   }
 
-  for(int o=0;o<primes.size();o++){
-    printMinterm(primes[o].minterm);
-  }
+  // for(int o=0;o<primes.size();o++){
+  //   printMinterm(primes[o].minterm);
+  // }
 
   std::cout << "\n\n==================================\nstart building tree, with node in consideration\n";
-  printMinterm(nodeRemains);
+  // printMinterm(nodeRemains);
   std::cout << '\n';
   recTreeConstructor(rootpt,primes,nodeRemains);
 
@@ -403,7 +404,7 @@ void recTreeConstructor(bdnode* node,const std::vector<implicant>& primes,const 
     //check if case for 1, one prime with -------- (base case)
     int maxMaskCount=popcount(nodeRemains);
 
-    printMinterm(nodeRemains);
+    // printMinterm(nodeRemains);
     for(int i=0;i<primes.size();i++){
       int cm=popcount(primes[i].mask);
 
@@ -624,57 +625,6 @@ inline int popcount(const term& v){
   return count;
 }
 
-//DEBUG FUNC
-// below are all debug functions
-
-template <class T>
-void printV(std::vector<T>& v, char end, char m){
-  for (int i=0;i<v.size();++i){
-    std::cout << v[i]<<m;
-  }
-  std::cout << end;
-}
-
-template <class T>
-int find(std::vector<T>& v, T a){
-  for(int i=0;i<v.size();i++){
-    if(v[i]==a){
-      return i;
-    }
-  }
-  // v.push_back(a);
-  return -1;
-}
-
-void genInput(std::vector<wd>& in,int digit,std::vector<std::string>& out){
-  wd printmask=1;
-  for(int i=0;i<in.size();i++){
-    std::string temp;
-    for(int j=0;j<digit;j++){
-      if(in[i]&(printmask<<(j))){
-        temp+='1';
-      }else{
-        temp+='0';
-      }
-    }
-    // std::cout << in << '\n';
-    out.push_back(temp);
-  }
-}
-
-double getAss1NodeNum(int size){
-  return(pow(2.0,size+1)-1);
-}
-
-void deltree(bdt t){
-  if(t!=NULL){
-    deltree(t->left);
-    deltree(t->right);
-    delete t;
-  }
-}
-
-
 void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& minterms){ //checked order right
   int numwd=fvalues[0].size()/wdlength;
   int lastlen=fvalues[0].size()%wdlength;
@@ -714,98 +664,150 @@ void genMinterm(const std::vector<std::string>& fvalues, std::vector<term>& mint
   }
 }
 
-void printMinterm(const term& minterm){
-  std::cout << "from Xn <-- X1: ";
-  for(int i=minterm.size()-1;i>=0;--i){
 
-    std::cout << std::bitset<wdlength>(minterm[i])<<' ';
-  }
-  std::cout << '\n';
-}
-void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
-  wd mask=0;
-  wd minterm=0;
-  // term printmask=1;
-  if(fval){
-    for(int i=0;i<str.length();i++){
-      if(int(str[i])==45){
-        mask=mask|(1ULL<<i);
-      }else if(int(str[i]==49)){
-        minterm=minterm|(1ULL<<i);
-      }
-    }
-  }else{
-    for(int i=0;i<str.length();i++){
-      if(int(str[i])==45){
-        mask=mask|(1ULL<<(str.length()-i-1));
-      }else if(int(str[i]==49)){
-        minterm=minterm|(1ULL<<(str.length()-i-1));
-      }
-    }
-  }
-
-  primes.push_back((implicant){{mask},{minterm}});
-  printPrime({mask},{minterm},bitsize);
-}
-
-
-
-std::string getMinterm(wd i){
-  uint64_t printmask=1;
-  std::string temp;
-  for(int j=0;j<bitsize;j++){
-    if(i&(printmask<<(j))){
-      temp+='1';
-    }else{
-      temp+='0';
-    }
-  }
-  return temp;
-}
-
-void printPrime(const term& mask,const term& minterm, int len, char end){
-  wd printmask=1;
-  int numWord=len/wdlength;
-  int lastlen=len%wdlength;
-
-  std::cout << "from Xn <-- X1: ";
-
-  for(int i=lastlen-1;i>=0;i--){
-    if(mask[numWord]&(printmask<<(i))){
-      std::cout<<'-';
-    }else{
-      if(minterm[numWord]&(printmask<<(i))){
-        std::cout<<'1';
-      }else{
-        std::cout<<'0';
-      }
-    }
-  }
-
-  numWord--;
-
-  while (numWord>=0) {
-    std::cout << " " << '\n';
-    for(int i=wdlength-1;i>=0;i--){
-      if(mask[numWord]&(printmask<<(i))){
-        std::cout<<'-';
-      }else{
-        if(minterm[numWord]&(printmask<<(i))){
-          std::cout<<'1';
-        }else{
-          std::cout<<'0';
-        }
-      }
-    }
-    numWord--;
-  }
-
-  std::cout << end;
-}
-
-
-
-
+// //DEBUG FUNC
+// // below are all debug functions
+//
+// template <class T>
+// void printV(std::vector<T>& v, char end, char m){
+//   for (int i=0;i<v.size();++i){
+//     std::cout << v[i]<<m;
+//   }
+//   std::cout << end;
+// }
+//
+// template <class T>
+// int find(std::vector<T>& v, T a){
+//   for(int i=0;i<v.size();i++){
+//     if(v[i]==a){
+//       return i;
+//     }
+//   }
+//   // v.push_back(a);
+//   return -1;
+// }
+//
+// void genInput(std::vector<wd>& in,int digit,std::vector<std::string>& out){
+//   wd printmask=1;
+//   for(int i=0;i<in.size();i++){
+//     std::string temp;
+//     for(int j=0;j<digit;j++){
+//       if(in[i]&(printmask<<(j))){
+//         temp+='1';
+//       }else{
+//         temp+='0';
+//       }
+//     }
+//     // std::cout << in << '\n';
+//     out.push_back(temp);
+//   }
+// }
+//
+// double getAss1NodeNum(int size){
+//   return(pow(2.0,size+1)-1);
+// }
+//
+// void deltree(bdt t){
+//   if(t!=NULL){
+//     deltree(t->left);
+//     deltree(t->right);
+//     delete t;
+//   }
+// }
+//
+//
+// void printMinterm(const term& minterm){
+//   std::cout << "from Xn <-- X1: ";
+//   for(int i=minterm.size()-1;i>=0;--i){
+//
+//     std::cout << std::bitset<wdlength>(minterm[i])<<' ';
+//   }
+//   std::cout << '\n';
+// }
+// void appedPrime(std::string str, std::vector<implicant>& primes, bool fval){
+//   wd mask=0;
+//   wd minterm=0;
+//   // term printmask=1;
+//   if(fval){
+//     for(int i=0;i<str.length();i++){
+//       if(int(str[i])==45){
+//         mask=mask|(1ULL<<i);
+//       }else if(int(str[i]==49)){
+//         minterm=minterm|(1ULL<<i);
+//       }
+//     }
+//   }else{
+//     for(int i=0;i<str.length();i++){
+//       if(int(str[i])==45){
+//         mask=mask|(1ULL<<(str.length()-i-1));
+//       }else if(int(str[i]==49)){
+//         minterm=minterm|(1ULL<<(str.length()-i-1));
+//       }
+//     }
+//   }
+//
+//   primes.push_back((implicant){{mask},{minterm}});
+//   printPrime({mask},{minterm},bitsize);
+// }
+//
+//
+//
+// std::string getMinterm(wd i){
+//   uint64_t printmask=1;
+//   std::string temp;
+//   for(int j=0;j<bitsize;j++){
+//     if(i&(printmask<<(j))){
+//       temp+='1';
+//     }else{
+//       temp+='0';
+//     }
+//   }
+//   return temp;
+// }
+//
+// void printPrime(const term& mask,const term& minterm, int len, char end){
+//   wd printmask=1;
+//   int numWord=len/wdlength;
+//   int lastlen=len%wdlength;
+//
+//   std::cout << "from Xn <-- X1: ";
+//
+//   for(int i=lastlen-1;i>=0;i--){
+//     if(mask[numWord]&(printmask<<(i))){
+//       std::cout<<'-';
+//     }else{
+//       if(minterm[numWord]&(printmask<<(i))){
+//         std::cout<<'1';
+//       }else{
+//         std::cout<<'0';
+//       }
+//     }
+//   }
+//
+//   numWord--;
+//
+//   while (numWord>=0) {
+//     std::cout << " " << '\n';
+//     for(int i=wdlength-1;i>=0;i--){
+//       if(mask[numWord]&(printmask<<(i))){
+//         std::cout<<'-';
+//       }else{
+//         if(minterm[numWord]&(printmask<<(i))){
+//           std::cout<<'1';
+//         }else{
+//           std::cout<<'0';
+//         }
+//       }
+//     }
+//     numWord--;
+//   }
+//
+//   std::cout << end;
+// }
+//
+//
+//
+//
 int getTreeNodeNum(bdnode*  t) {
   int count=0;
   getTreeNodeNumRec(t,count);
@@ -843,50 +845,50 @@ void printTree(bdt t, int depth){
   }
 
 }
-
-void testCorrectness(bdt rt, const std::vector<wd>& correct){
-  std::cerr << "test start" << '\n';
-  wd max=(1ULL<<bitsize)-1;
-  std::vector<wd> outTerm;
-  std::vector<bool> outBool;
-  outTerm.reserve(correct.size());
-  outBool.reserve(correct.size());
-
-
-  for(wd i=0;i<=max;i++){
-    std::string temp=getMinterm(i);
-
-    if(is1(evalcompactbdt(rt,temp)[0])){
-      std::cout << temp<<"("<<i<<") " << ' '<<std::flush;
-      outTerm.push_back(i);
-      outBool.push_back(false);
-    }
-  }
-
-  std::cout << "\n\n*************************************\n* all test done, generateing errors *\n*************************************\n";
-
-  std::cout << "below should return 0, but should be 1:" << '\n';
-  for(int i=0;i<correct.size();i++){
-    int f=find(outTerm,correct[i]);
-    if(f>=0){
-      outBool[f]=true;
-      // std::cout << outTerm[f] << '\n';
-    }else{
-      std::cout <<"term "<< getMinterm(outTerm[i])<< "("<<outTerm[i]<<")" << '\n';
-    }
-  }
-
-  std::cout << "\nbelow should return 1, but should be 0:" << '\n';
-
-  for(int i=0;i<outBool.size();i++){
-    if(outBool[i]!=true){
-      std::cout <<"term "<< getMinterm(outTerm[i])<< "("<<outTerm[i]<<")" << '\n';
-    }
-  }
-
-  std::cout << "\nend of errors" << '\n';
-
-
-}
-
-//END DEBUG FUNC
+//
+// void testCorrectness(bdt rt, const std::vector<wd>& correct){
+//   std::cerr << "test start" << '\n';
+//   wd max=(1ULL<<bitsize)-1;
+//   std::vector<wd> outTerm;
+//   std::vector<bool> outBool;
+//   outTerm.reserve(correct.size());
+//   outBool.reserve(correct.size());
+//
+//
+//   for(wd i=0;i<=max;i++){
+//     std::string temp=getMinterm(i);
+//
+//     if(is1(evalcompactbdt(rt,temp)[0])){
+//       std::cout << temp<<"("<<i<<") " << ' '<<std::flush;
+//       outTerm.push_back(i);
+//       outBool.push_back(false);
+//     }
+//   }
+//
+//   std::cout << "\n\n*************************************\n* all test done, generateing errors *\n*************************************\n";
+//
+//   std::cout << "below should return 0, but should be 1:" << '\n';
+//   for(int i=0;i<correct.size();i++){
+//     int f=find(outTerm,correct[i]);
+//     if(f>=0){
+//       outBool[f]=true;
+//       // std::cout << outTerm[f] << '\n';
+//     }else{
+//       std::cout <<"term "<< getMinterm(outTerm[i])<< "("<<outTerm[i]<<")" << '\n';
+//     }
+//   }
+//
+//   std::cout << "\nbelow should return 1, but should be 0:" << '\n';
+//
+//   for(int i=0;i<outBool.size();i++){
+//     if(outBool[i]!=true){
+//       std::cout <<"term "<< getMinterm(outTerm[i])<< "("<<outTerm[i]<<")" << '\n';
+//     }
+//   }
+//
+//   std::cout << "\nend of errors" << '\n';
+//
+//
+// }
+//
+// //END DEBUG FUNC
