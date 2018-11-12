@@ -20,11 +20,11 @@ Consider a truth table such as below. The programme will initially given an arra
 - [ ] Write an function called evalcompactbdt() to evaulate an string based on the binary decision tree.
 
 
-The detailed description of the task is available [here](https://github.com/Ben20082010/truth-table-compression/blob/master/requirement.pdf).
+The detailed description of the task is available [here](https://github.com/BenShen98/truth-table-compression/blob/master/requirement.pdf).
 
 # High Level Implementation
 
-Please refer to [this section](https://github.com/Ben20082010/truth-table-compression/blob/master/report/high%20level%20implementation.pdf) of my report for detailed description.
+Please refer to [this section](https://github.com/BenShen98/truth-table-compression/blob/master/report/high%20level%20implementation.pdf) of my report for detailed description.
 
 
 To accommodate input with arbitrary, I created a new data structure called 'term', which is a vector of 'uint64_t'.
@@ -79,7 +79,7 @@ It was vital that my function produces the correct result, that is why I had wri
 
 I had also used 'valgrind' to check there is no memory leak.
 
-Please refer to [this section](https://github.com/Ben20082010/truth-table-compression/blob/master/report/Verification%20and%20Testing%20Performance.pdf) of my report for detailed description.
+Please refer to [this section](https://github.com/BenShen98/truth-table-compression/blob/master/report/Verification%20and%20Testing%20Performance.pdf) of my report for detailed description.
 
 ### Test on compression 
 
