@@ -58,7 +58,7 @@ Below is what this evalcompactbdt() perform:
 
 # Implementation in C++
 
-Please refer to [this section](https://github.com/Ben20082010/truth-table-compression/blob/master/report/Implementation%20in%20C%2B%2B.pdf) of my report for detailed description of Implementation.
+Please refer to [this section](https://github.com/BenShen98/truth-table-compression/blob/master/report/Implementation%20in%20C%2B%2B.pdf) of my report for detailed description of Implementation.
 
 While I wrote this coursework, I aimed and achieved the following:
 
